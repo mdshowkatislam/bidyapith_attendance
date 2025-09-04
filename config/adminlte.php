@@ -368,7 +368,13 @@ return [
                     'icon_color' => 'yellow',
                     'submenu' => [
                         [
-                            'text' => 'Shift list',
+                            'text' => 'Branch Manage',
+                            'icon' => 'fas fa-cogs',
+                            'icon_color' => 'red',
+                            'route' => 'branch.index',
+                        ],
+                        [
+                            'text' => 'Shift Manage',
                             'icon' => 'fas fa-cogs',
                             'icon_color' => 'red',
                             'route' => 'shift.index',

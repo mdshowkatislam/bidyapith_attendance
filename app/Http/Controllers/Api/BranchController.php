@@ -3,27 +3,27 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\ShiftSetting;
+use App\Models\Branch;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
-class ShiftController extends Controller
+class BranchController extends Controller
 {
     public function index()
-    {dd('hui'); 
-        $shift = ShiftSetting::where('status', 1)->get();
-
-        if (count($shift) > 0) {
+    {
+        $branches = Branch::where('rec_status', 1)->get();
+       \Log::info($branches);
+        if (count($branches) > 0) {
             return response()->json([
-                'message' => 'Shifts fetched successfully.',
-                'shift' => $shift,
+                'message' => 'Branches fetched successfully.',
+                'branches' => $branches,
             ], 200);
         }
         return response()->json([
-            'message' => 'Shift not found.'
+            'message' => 'Branches not found.'
         ], 404);
     }
 

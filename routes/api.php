@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\GroupSpecialWorkdayController;
 use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\ShiftController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\SpecialWorkingdayController;
 use App\Http\Controllers\Api\WorkdayController;
 use App\Http\Controllers\Api\WorkdayGroupController;
@@ -26,6 +27,14 @@ Route::get('/user', function (Request $request) {
     return $request->user();
 });
 
+// ✅ BRANCH MANAGEMENT
+Route::prefix('branch_manage')->group(function () {
+    Route::get('/list', [BranchController::class, 'index']);
+    Route::post('/store', [BranchController::class, 'store']);
+    Route::get('/edit/{id}', [BranchController::class, 'edit']);
+    Route::put('/update/{branch}', [BranchController::class, 'update']);
+    Route::delete('/delete/{id}', [BranchController::class, 'destroy']);
+});
 // ✅ SHIFT MANAGEMENT
 Route::prefix('shift_manage')->group(function () {
     Route::get('/list', [ShiftController::class, 'index']);

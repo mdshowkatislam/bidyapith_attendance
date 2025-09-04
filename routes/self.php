@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\Frontend\BaseGroupController;
 use App\Http\Controllers\Admin\Frontend\BaseHolidayController;
+use App\Http\Controllers\Admin\Frontend\BaseBranchController;
 use App\Http\Controllers\Admin\Frontend\BaseShiftController;
 use App\Http\Controllers\Admin\Frontend\BaseSpecialWorkingdayController;
 use App\Http\Controllers\Admin\Frontend\BaseWorkdayController;
@@ -13,6 +14,17 @@ use App\Http\Controllers\Admin\EmployeeProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
+    // ✅ SHIFT MANAGEMENT
+    Route::prefix('branch')->group(function () {
+        Route::get('/', [BaseBranchController::class, 'index'])->name('branch.index');
+        Route::get('/create', function () {
+            return view('admin.frontend.branch.create');
+        })->name('branch.create');
+        Route::post('/store', [BaseBranchController::class, 'store'])->name('branch.store');
+        Route::get('/edit/{id}', [BaseBranchController::class, 'edit'])->name('branch.edit');
+        Route::post('/update/{id}', [BaseBranchController::class, 'update'])->name('branch.update');
+        Route::get('/delete/{id}', [BaseBranchController::class, 'destroy'])->name('branch.destroy');
+    });
     // ✅ SHIFT MANAGEMENT
     Route::prefix('shift')->group(function () {
         Route::get('/', [BaseShiftController::class, 'index'])->name('shift.index');

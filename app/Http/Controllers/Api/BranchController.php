@@ -72,10 +72,9 @@ class BranchController extends Controller
         }
     }
 
-    public function update( $uid,Request $request)
-    { 
+    public function update($uid, Request $request)
+    {
         $validator = Validator::make($request->all(), [
-            
             'branch_name_en' => 'required|string',
             'branch_location' => 'required|string'
         ]);

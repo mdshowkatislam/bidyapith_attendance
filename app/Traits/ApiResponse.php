@@ -1,26 +1,32 @@
 <?php
 
 namespace App\Traits;
+
 use Illuminate\Http\Response;
 
 trait ApiResponse
 {
-    public function successResponseWithData($data,$message,$code=Response::HTTP_CREATE){
+    public function successResponseWithData($data, $message, $code = Response::HTTP_CREATE)
+    {
         return response()->json([
-          'status'=>true,
-          'message'=>$message,
-          'data'=>$data
-        ],$code);
-
+            'status' => true,
+            'message' => $message,
+            'data' => $data
+        ], $code);
     }
-     public function successMessage($message, $code = Response::HTTP_OK){
+
+    public function successMessage($message, $code = Response::HTTP_OK)
+    {
         return response()->json(['status' => true, 'message' => $message, 'code' => $code], $code);
     }
 
-    public function errorResponse($message, $code){
+    public function errorResponse($message, $code)
+    {
         return response()->json(['status' => false, 'message' => $message, 'code' => $code], $code);
     }
-    public function successResponse($data, $code = Response::HTTP_OK) {
+
+    public function successResponse($data, $code = Response::HTTP_OK)
+    {
         return response()->json(['status' => true, 'data' => $data], $code);
     }
 }

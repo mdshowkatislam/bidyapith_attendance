@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('branches', function (Blueprint $table) {
          $table->id();
-            $table->bigInteger('uid')->unique();
+            $table->bigInteger('uid')->unique()->nullable();
             $table->bigInteger('branch_id')->nullable(); 
-            $table->string('branch_name')->nullable()->comment("Branch name in bangla");
             $table->string('branch_name_en')->nullable();
+            $table->string('branch_name_bn')->nullable();
             $table->string('branch_location')->nullable();
             $table->bigInteger('head_of_branch_id')->nullable();
             $table->bigInteger('eiin')->nullable();

@@ -27,7 +27,7 @@ class ShiftSetting extends Model
         'description',
         'eiin',
         'status',
-          'created_at',
+         'created_at',
         'updated_at',
     ];  
      public function branch()

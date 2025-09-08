@@ -18,7 +18,7 @@ class BaseBranchController extends Controller
           ])
               ->withOptions(['verify' => false])
               ->get('http://attendance2.localhost.com/api/branch_manage/list');
-dd($response->json());
+          dd($response->json());
           $branch  = $response->json()['branch'];
           return view('admin.frontend.branch.index',compact('branch'));
     }

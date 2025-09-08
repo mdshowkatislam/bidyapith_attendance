@@ -14,8 +14,8 @@ class Branch extends Model
     protected $fillable = [
         'uid',
         'branch_id',
-        'branch_name',
         'branch_name_en',
+        'branch_name_bn',
         'branch_location',
         'head_of_branch_id',
         'eiin',

@@ -18,7 +18,7 @@ use App\Http\Controllers\Api\WorkdayGroupController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-require __DIR__ . '/auth.php';
+// require __DIR__ . '/auth.php';
 
 // Route::middleware('auth:sanctum')->group(function () {
 
@@ -31,8 +31,8 @@ Route::get('/user', function (Request $request) {
 Route::prefix('branch_manage')->group(function () {
     Route::get('/list', [BranchController::class, 'index']);
     Route::post('/store', [BranchController::class, 'store']);
-    Route::get('/edit/{id}', [BranchController::class, 'edit']);
-    Route::put('/update/{branch}', [BranchController::class, 'update']);
+    Route::get('/{id}', [BranchController::class, 'getById']);
+    Route::put('/update/{uid}', [BranchController::class, 'update']);
     Route::delete('/delete/{id}', [BranchController::class, 'destroy']);
 });
 // ✅ SHIFT MANAGEMENT

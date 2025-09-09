@@ -11,7 +11,8 @@ use Illuminate\Http\Request;
 class BaseBranchController extends Controller
 {
  public function index()
-    {
+    { 
+        
           $response = Http::withHeaders([
               'Content-Type' => 'application/json',
               'accept' => 'application/json',

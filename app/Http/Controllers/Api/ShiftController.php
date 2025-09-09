@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Branch;
 use App\Models\ShiftSetting;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
@@ -13,7 +14,7 @@ use Illuminate\Validation\Rule;
 class ShiftController extends Controller
 {
     public function index()
-    {dd('hui'); 
+    {
         $shift = ShiftSetting::where('status', 1)->get();
 
         if (count($shift) > 0) {
@@ -29,12 +30,21 @@ class ShiftController extends Controller
 
     public function store(Request $request)
     {
-        // return response()->json($request->description);
+        // return response()->json($request->all());
         // dd('test');
         $validator = Validator::make($request->all(), [
-            'shift_name' => ['required', 'unique:shift_settings,shift_name'],
+            'branch_code' => ['required', 'integer', Rule::exists('branches', 'branch_code')],
+            'shift_name_en' => [
+                'required',
+                'string',
+                Rule::unique('shift_settings')->where(function ($query) use ($request) {
+                    return $query->where('branch_code', $request->branch_code);
+                })
+            ],
+            'shift_name_bn' => ['nullable', 'string'],
             'start_time' => ['required', 'date_format:h:i A'],
             'end_time' => ['required', 'date_format:h:i A'],
+            'description' => ['nullable', 'string'],
         ]);
 
         if ($validator->fails()) {
@@ -44,11 +54,10 @@ class ShiftController extends Controller
                 'errors' => $validator->errors()
             ], 422);
         }
-
+     
         $validated = $validator->validated();
 
-        // Parse using AM/PM format
-
+   
         try {
             $start = Carbon::createFromFormat('h:i A', $validated['start_time']);
         } catch (\Exception $e) {
@@ -83,38 +92,45 @@ class ShiftController extends Controller
             $end->addDay();
         }
 
-        ShiftSetting::create([
-            'shift_name' => $validated['shift_name'],
-            'start_time' => $start->format('H:i'),  // store in 24-hr format
-            'end_time' => $end->format('H:i'),
-            'description' => $request->input('description'),  // this line i am getting problem in vs code indecation ?
-            'status' => $request->status ?? 1,
-        ]);
+        ShiftSetting::create($request->all());
 
         return response()->json([
             'message' => 'Shift saved successfully!'
         ], 201);
     }
 
-    public function update(Request $request, ShiftSetting $shiftSetting)
+    public function update($uid, Request $request)
     {
-        $rules = [
+        $shiftSetting = ShiftSetting::where('uid', $uid)->firstOrFail();
+
+        $validator = Validator::make($request->all(), [
+            'branch_code' => ['required', 'integer', Rule::exists('branches', 'branch_code')],
+            'shift_name_en' => [
+                'required',
+                'string',
+                Rule::unique('shift_settings')->where(function ($query) use ($request, $shiftSetting) {
+                    return $query
+                        ->where('branch_code', $request->branch_code)
+                        ->where('uid', '!=', $shiftSetting->uid);  // Exclude current record
+                })
+            ],
+            'shift_name_bn' => ['nullable', 'string'],
             'start_time' => ['required', 'date_format:h:i A'],
             'end_time' => ['required', 'date_format:h:i A'],
-        ];
+            'description' => ['nullable', 'string'],
+        ]);
 
-        if ($request->filled('shift_name') && $request->input('shift_name') !== $shiftSetting->shift_name) {
-            $rules['shift_name'] = [
-                'required',
-                Rule::unique('shift_settings', 'shift_name')->ignore($shiftSetting->id),
-            ];
-        } else {
-            $rules['shift_name'] = ['required'];
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'validation_error',
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        $validated = $request->validate($rules);
+        $validated = $validator->validated();
 
-        \Log::info('VALIDATED:', $validated);
+        // Parse time formats (same as store function)
         try {
             $start = Carbon::createFromFormat('h:i A', $validated['start_time']);
         } catch (\Exception $e) {
@@ -135,7 +151,7 @@ class ShiftController extends Controller
             }
         }
 
-        // Validate same time
+        // If start and end time are equal
         if ($start->eq($end)) {
             return response()->json([
                 'errors' => [
@@ -150,33 +166,38 @@ class ShiftController extends Controller
             $end->addDay();
         }
 
-        // Update shift record
+        // Update the shift setting
         $shiftSetting->update([
-            'shift_name' => $validated['shift_name'],
+            'branch_code' => $validated['branch_code'],
+            'shift_name_en' => $validated['shift_name_en'],
+            'shift_name_bn' => $validated['shift_name_bn'],
             'start_time' => $start->format('H:i'),  // store in 24-hour format
             'end_time' => $end->format('H:i'),
-            'description' => $request->input('description'),
+            'description' => $validated['description'],
+            'eiin' => $request->input('eiin'),
             'status' => $request->status ?? 1,
         ]);
 
         return response()->json([
-            'message' => 'Shift updated successfully!!!'
+            'message' => 'Shift updated successfully!'
         ], 200);
     }
 
-    public function edit($id)
+    public function edit($uid)
     {
-        $shift = ShiftSetting::findOrFail($id);
+        $shift = ShiftSetting::where('uid', $uid)->firstOrFail();
+        $branch = Branch::select('id', 'branch_name_en', 'branch_name_bn')->where('rec_status', 1)->get();
+        $data = ['shift' => $shift, 'branch' => $branch];
 
         return response()->json([
             'message' => 'Shift found.',
-            'shift' => $shift
+            'data' => $data
         ], 200);
     }
 
-    public function destroy($id)
+    public function destroy($uid)
     {
-        $shift = ShiftSetting::find($id);
+        $shift = ShiftSetting::where('uid', $uid)->firstOrFail();
 
         if (!$shift) {
             return response()->json([

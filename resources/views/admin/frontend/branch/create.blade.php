@@ -19,7 +19,19 @@
         <form id="formData">
             @csrf
             <div class="row">
-                <!-- Shift Name -->
+                <!-- Branch Id -->
+                <div class="col-md-6 mb-3">
+                    <label for="branch_name"
+                           class="form-label">Branch Id</label>
+                    <input type="integer"
+                           name="branch_id"
+                           class="form-control"
+                           id="branch_id">
+                    <span class="text-danger error-text"
+                          data-error="branch_id"></span>
+
+                </div>
+                <!-- Branch Name -->
                 <div class="col-md-6 mb-3">
                     <label for="branch_name"
                            class="form-label">Branch Name</label>

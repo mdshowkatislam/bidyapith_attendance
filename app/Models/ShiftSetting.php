@@ -7,11 +7,20 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Traits\CreatedUId;
 
 /**
- * @property string $shift_name
- * @property string $id
- * @property string|null $desciption
+ * ShiftSetting Model 
+ * @property string $uid
+ * @property int $branch_id
+ * @property string $shift_name_en
+ * @property string $shift_name_bn
+ * @property string $start_time
+ * @property string $end_time
+ * @property string|null $description
+ * @property int $eiin
+ * @property int $status
+ * @property \Illuminate\Support\Carbon $created_at
+ * @property \Illuminate\Support\Carbon $updated_at
+ * @property-read \App\Models\Branch $branch
  */
-
 
 class ShiftSetting extends Model
 { 
@@ -19,8 +28,8 @@ class ShiftSetting extends Model
     protected $table = "shift_settings";
     protected $fillable = [
         'uid',
-        'branch_id',
-        'shift_name',
+        'branch_code',
+        'shift_name_en',
         'shift_name_bn',
         'start_time',
         'end_time',
@@ -32,7 +41,8 @@ class ShiftSetting extends Model
     ];  
      public function branch()
     {
-        return $this->belongsTo(Branch::class, 'branch_id', 'uid')->select('uid', 'branch_name');
+        return $this->belongsTo(Branch::class, 'branch_code', 'branch_code')
+        ->select('id','uid','branch_name_en','branch_name_bn','head_of_branch_id');
     }
 }
 

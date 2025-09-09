@@ -18,13 +18,14 @@ class BranchService
         return $this->branchRepository->getAll();
     }
 
-    public function getById($id)
+    public function getByUid($uid)
     {
-        return $this->branchRepository->getById($id);
+        return $this->branchRepository->getByUid($uid);
     }
 
     public function create($data)
     {
+      
         return $this->branchRepository->create($data);
     }
 

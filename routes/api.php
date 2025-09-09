@@ -31,7 +31,8 @@ Route::get('/user', function (Request $request) {
 Route::prefix('branch_manage')->group(function () {
     Route::get('/list', [BranchController::class, 'index']);
     Route::post('/store', [BranchController::class, 'store']);
-    Route::get('/{id}', [BranchController::class, 'getById']);
+    Route::get('/{uid}', [BranchController::class, 'getByUid']);
+    Route::get('edit/{uid}', [BranchController::class, 'edit']);
     Route::put('/update/{uid}', [BranchController::class, 'update']);
     Route::delete('/delete/{id}', [BranchController::class, 'destroy']);
 });
@@ -39,8 +40,8 @@ Route::prefix('branch_manage')->group(function () {
 Route::prefix('shift_manage')->group(function () {
     Route::get('/list', [ShiftController::class, 'index']);
     Route::post('/store', [ShiftController::class, 'store']);
-    Route::get('/edit/{id}', [ShiftController::class, 'edit']);
-    Route::put('/update/{shiftSetting}', [ShiftController::class, 'update']);
+    Route::get('/edit/{uid}', [ShiftController::class, 'edit']);
+    Route::put('/update/{uid}', [ShiftController::class, 'update']);
     Route::delete('/delete/{id}', [ShiftController::class, 'destroy']);
 });
 // ✅ Work Day MANAGEMENT
@@ -51,6 +52,7 @@ Route::prefix('day_manage')->group(function () {
     Route::put('/update/{id}', [WorkdayController::class, 'update']);
     Route::delete('/delete/{id}', [WorkdayController::class, 'destroy']);
 });
+
 
 // ✅ GROUP MANAGEMENT
 Route::prefix('group_manage')->group(function () {

@@ -6,15 +6,13 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
+   
     public function up(): void
     {
         Schema::create('branches', function (Blueprint $table) {
          $table->id();
             $table->bigInteger('uid')->unique()->nullable();
-            $table->bigInteger('branch_id')->nullable(); 
+            $table->bigInteger('branch_code')->unique();
             $table->string('branch_name_en')->nullable();
             $table->string('branch_name_bn')->nullable();
             $table->string('branch_location')->nullable();

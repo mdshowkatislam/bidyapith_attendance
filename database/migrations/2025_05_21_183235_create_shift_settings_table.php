@@ -13,8 +13,8 @@ return new class extends Migration {
         Schema::create('shift_settings', function (Blueprint $table) {
             $table->id();
             $table->bigInteger('uid')->unique();
-            $table->bigInteger('branch_id')->nullable();
-            $table->string('shift_name')->nullable();
+            $table->bigInteger('branch_code')->nullable();
+            $table->string('shift_name_en')->nullable();
             $table->string('shift_name_bn')->nullable();
             $table->string('start_time')->nullable();
             $table->string('end_time')->nullable();
@@ -22,6 +22,7 @@ return new class extends Migration {
             $table->bigInteger('eiin')->nullable();
             $table->tinyInteger('status')->default(1)->nullable();
             $table->timestamps();
+            $table->unique(['branch_code', 'shift_name_en']);
         });
     }
 

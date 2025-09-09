@@ -13,7 +13,7 @@ class Branch extends Model
 
     protected $fillable = [
         'uid',
-        'branch_id',
+        'branch_code',
         'branch_name_en',
         'branch_name_bn',
         'branch_location',
@@ -28,4 +28,12 @@ class Branch extends Model
     // {
     //     return $this->belongsTo(Teacher::class, 'head_of_branch_id', 'uid')->select('uid', 'pdsid', 'caid', 'name_en', 'index_number');
     // }
+
+    public function getShift()
+    {
+        return $this
+            ->hasMany(ShiftSetting::class, 'branch_code', 'branch_code')
+            ->select('uid', 'branch_code', 'shift_name_en', 'shift_name_bn', 'start_time', 'end_time');
+    }
+    
 }

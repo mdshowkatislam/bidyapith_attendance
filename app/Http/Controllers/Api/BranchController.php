@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Branch;
+use App\Models\Employee;
 use App\Services\BranchService;
 use App\Traits\ApiResponse;
 use Carbon\Carbon;
@@ -42,7 +43,8 @@ class BranchController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'branch_name_en' => 'required|string',
+            'branch_code' => 'required|integer|unique:branches,branch_code',
+            'branch_name_en' => 'required|string| unique:branches,branch_name_en',
             'branch_location' => 'required|string'
         ]);
 
@@ -55,7 +57,7 @@ class BranchController extends Controller
         }
 
         try {
-            $branch = $this->branchService->create($validator->validated());
+            $branch = $this->branchService->create($request->all());
 
             return $this->successResponseWithData(
                 $branch,
@@ -75,7 +77,8 @@ class BranchController extends Controller
     public function update($uid, Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'branch_name_en' => 'required|string',
+            'branch_code' => 'required|integer|unique:branches,branch_code,' . $uid,
+            'branch_name_en' => 'required|string| unique:branches,branch_name_en,' . $uid,
             'branch_location' => 'required|string'
         ]);
 
@@ -88,7 +91,7 @@ class BranchController extends Controller
         }
 
         try {
-            $branch = $this->branchService->updateByUid($uid, $validator->validated());
+            $branch = $this->branchService->updateByUid($uid, $request->all());
 
             if (!$branch) {
                 return $this->errorResponse(
@@ -112,12 +115,30 @@ class BranchController extends Controller
         }
     }
 
-    public function getById($uid)
+    public function getByUid($uid)
     {
         try {
-            $branch = $this->branchService->getById($uid);
+            $branch = $this->branchService->getByUid($uid);
             if ($branch) {
                 return $this->successResponse($branch, Response::HTTP_OK);
+            } else {
+                return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
+            }
+        } catch (\Exception $e) {
+            return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
+        }
+    }
+    public function edit($uid)
+    {
+        try {
+            $branch = $this->branchService->getByUid($uid);
+          
+            if ($branch) {
+                $branchHeadTeacher=Employee::where('is_teacher',1)
+                ->where('is_branchHead',1)->where('rec_status',1)
+                ->select('id','name')->get(); // this could be done using relation in future or from teacher table.
+                  $data=['branch'=>$branch,'branchHeadTeacher'=>$branchHeadTeacher]; 
+                return $this->successResponse($data, Response::HTTP_OK);
             } else {
                 return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
             }

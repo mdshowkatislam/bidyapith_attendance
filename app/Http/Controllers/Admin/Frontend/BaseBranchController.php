@@ -19,36 +19,39 @@ class BaseBranchController extends Controller
           ])
               ->withOptions(['verify' => false])
               ->get('http://attendance2.localhost.com/api/branch_manage/list');
-          dd($response->json());
-          $branch  = $response->json()['branch'];
-          return view('admin.frontend.branch.index',compact('branch'));
+        //   dd($response->json());
+          $branches  = $response->json()['branches'];
+          return view('admin.frontend.branch.index',compact('branches'));
     }
 
 
     public function store(Request $request)
     {
-      dd($request->all());
-        Http::post(url('/api/branch_manage/store'), $request->all());
-        return redirect()->route('admin.frontend.branch.index');
+    //   dd($request->all());
+        Http::post(url('http://attendance2.localhost.com/api/branch_manage/store'), $request->all());
+        return redirect()->route('branch.index');
     }
 
-    public function edit($id)
+    public function edit($uid)
     {
-        $response = Http::get(url("http://attendance2.localhost.com/api/branch_manage/edit/{$id}"));
-        $branch = $response->json()['branch'];
+        // dd($uid);
+        $response = Http::get(url("http://attendance2.localhost.com/api/branch_manage/edit/{$uid}"));
+        // dd($response->json());
+        $branch = $response->json()['data'];
         return view('admin.frontend.branch.edit', compact('branch'));
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, $uid)
     {
-        Http::put(url("http://attendance2.localhost.com/api/branch_manage/update/{$id}"), $request->all());
-        return redirect()->route('admin.frontend.branch.index');
+        // dd($request->all());    
+        Http::put(url("http://attendance2.localhost.com/api/branch_manage/update/{$uid}"), $request->all());
+        return redirect()->route('branch.index');
     }
 
-    public function destroy($id)
+    public function destroy($uid)
     {
-        Http::delete(url("http://attendance2.localhost.com/api/branch_manage/delete/{$id}"));
-        return redirect()->route('admin.frontend.branch.index');
+        Http::delete(url("http://attendance2.localhost.com/api/branch_manage/delete/{$uid}"));
+        return redirect()->route('branch.index');
     }
  
 }

@@ -16,27 +16,25 @@ use App\Http\Controllers\Admin\EmployeeProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // ✅ SHIFT MANAGEMENT
+    // ✅ BRANCH MANAGEMENT
     Route::prefix('branch')->group(function () {
         Route::get('/', [BaseBranchController::class, 'index'])->name('branch.index');
         Route::get('/create', function () {
             return view('admin.frontend.branch.create');
         })->name('branch.create');
         Route::post('/store', [BaseBranchController::class, 'store'])->name('branch.store');
-        Route::get('/edit/{id}', [BaseBranchController::class, 'edit'])->name('branch.edit');
-        Route::post('/update/{id}', [BaseBranchController::class, 'update'])->name('branch.update');
-        Route::get('/delete/{id}', [BaseBranchController::class, 'destroy'])->name('branch.destroy');
+        Route::get('/edit/{uid}', [BaseBranchController::class, 'edit'])->name('branch.edit');
+        Route::put('/update/{uid}', [BaseBranchController::class, 'update'])->name('branch.update');
+        Route::get('/delete/{uid}', [BaseBranchController::class, 'destroy'])->name('branch.destroy');
     });
     // ✅ SHIFT MANAGEMENT
     Route::prefix('shift')->group(function () {
         Route::get('/', [BaseShiftController::class, 'index'])->name('shift.index');
-        Route::get('/create', function () {
-            return view('admin.frontend.shift.create');
-        })->name('shift.create');
+        Route::get('/create', [BaseShiftController::class, 'create'])->name('shift.create');
         Route::post('/store', [BaseShiftController::class, 'store'])->name('shift.store');
-        Route::get('/edit/{id}', [BaseShiftController::class, 'edit'])->name('shift.edit');
-        Route::post('/update/{id}', [BaseShiftController::class, 'update'])->name('shift.update');
-        Route::get('/delete/{id}', [BaseShiftController::class, 'destroy'])->name('shift.destroy');
+        Route::get('/edit/{uid}', [BaseShiftController::class, 'edit'])->name('shift.edit');
+        Route::put('/update/{uid}', [BaseShiftController::class, 'update'])->name('shift.update');
+        Route::get('/delete/{uid}', [BaseShiftController::class, 'destroy'])->name('shift.destroy');
     });
     // ✅ HOLIDAY MANAGEMENT
     Route::prefix('holiday')->group(function () {

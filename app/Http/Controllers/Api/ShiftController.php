@@ -14,13 +14,14 @@ use Illuminate\Validation\Rule;
 class ShiftController extends Controller
 {
     public function index()
-    {
-        $shift = ShiftSetting::where('status', 1)->get();
-
-        if (count($shift) > 0) {
+    {  
+        $shifts = ShiftSetting::with('branch')->where('status', 1)->get();
+        // \Log::info('Fetched Shifts:', $shift->toArray());   
+        if (count($shifts) > 0) {
+          
             return response()->json([
                 'message' => 'Shifts fetched successfully.',
-                'shift' => $shift,
+                'shifts' => $shifts,
             ], 200);
         }
         return response()->json([
@@ -28,10 +29,30 @@ class ShiftController extends Controller
         ], 404);
     }
 
+    public function add()
+    {
+        $branch = Branch::where('rec_status', 1)->select('id', 'uid', 'branch_code', 'branch_name_en', 'branch_name_bn')->get();
+
+        if (count($branch) > 0) {
+            return response()->json([
+                'message' => 'Branches fetched successfully.',
+                'branch' => $branch,
+            ], 200);
+        }
+        return response()->json([
+            'message' => 'Branch not found.'
+        ], 404);
+    }
+
     public function store(Request $request)
     {
-        // return response()->json($request->all());
-        // dd('test');
+        $request->merge([
+            'branch_code' => (int) $request->branch_code,
+            'eiin' => $request->eiin ? (int) $request->eiin : null,
+        ]);
+
+        // \Log::info($request->all());
+
         $validator = Validator::make($request->all(), [
             'branch_code' => ['required', 'integer', Rule::exists('branches', 'branch_code')],
             'shift_name_en' => [
@@ -48,16 +69,17 @@ class ShiftController extends Controller
         ]);
 
         if ($validator->fails()) {
+            \Log::info('Validation failed', $validator->errors()->toArray());
             return response()->json([
                 'status' => 'validation_error',
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
         }
-     
+
         $validated = $validator->validated();
 
-   
+        // dd('test');
         try {
             $start = Carbon::createFromFormat('h:i A', $validated['start_time']);
         } catch (\Exception $e) {
@@ -101,6 +123,7 @@ class ShiftController extends Controller
 
     public function update($uid, Request $request)
     {
+        // \Log::info('Update Request Data:', $request->all());
         $shiftSetting = ShiftSetting::where('uid', $uid)->firstOrFail();
 
         $validator = Validator::make($request->all(), [
@@ -185,9 +208,9 @@ class ShiftController extends Controller
 
     public function edit($uid)
     {
-        $shift = ShiftSetting::where('uid', $uid)->firstOrFail();
-        $branch = Branch::select('id', 'branch_name_en', 'branch_name_bn')->where('rec_status', 1)->get();
-        $data = ['shift' => $shift, 'branch' => $branch];
+        $shift = ShiftSetting::with('branch')->where('uid', $uid)->firstOrFail();
+        $branchs = Branch::select('id','branch_code', 'branch_name_en', 'branch_name_bn')->where('rec_status', 1)->get();
+        $data = ['shift' => $shift, 'branches' => $branchs];
 
         return response()->json([
             'message' => 'Shift found.',

@@ -76,11 +76,21 @@ class BranchController extends Controller
 
     public function update($uid, Request $request)
     {
+        
         $validator = Validator::make($request->all(), [
-            'branch_code' => 'required|integer|unique:branches,branch_code,' . $uid,
-            'branch_name_en' => 'required|string| unique:branches,branch_name_en,' . $uid,
-            'branch_location' => 'required|string'
+            'branch_code' => [
+                'required',
+                'integer',
+                Rule::unique('branches')->ignore($uid, 'uid')
+            ],
+            'branch_name_en' => [
+                'required',
+                'string',
+                Rule::unique('branches')->ignore($uid, 'uid')
+            ],
+           
         ]);
+        
 
         if ($validator->fails()) {
             return response()->json([
@@ -128,17 +138,21 @@ class BranchController extends Controller
             return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
         }
     }
+
     public function edit($uid)
     {
+        // \Log::info('Edit method called with UID: ' . $uid);
         try {
             $branch = $this->branchService->getByUid($uid);
-          
+            //   \Log::info(  $branch );exit();
+
             if ($branch) {
-                $branchHeadTeacher=Employee::where('is_teacher',1)
-                ->where('is_branchHead',1)->where('rec_status',1)
-                ->select('id','name')->get(); // this could be done using relation in future or from teacher table.
-                  $data=['branch'=>$branch,'branchHeadTeacher'=>$branchHeadTeacher]; 
-                return $this->successResponse($data, Response::HTTP_OK);
+                // $branchHeadTeacher=Employee::where('is_teacher',1)
+                // ->where('is_branchHead',1)->where('rec_status',1)
+                // ->select('id','name')->get(); // this could be done using relation in future or from teacher table.
+                //   $data=['branch'=>$branch,'branchHeadTeacher'=>$branchHeadTeacher];
+                // return $this->successResponse($data, Response::HTTP_OK);
+                return $this->successResponse($branch, Response::HTTP_OK);
             } else {
                 return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
             }

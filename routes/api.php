@@ -39,6 +39,7 @@ Route::prefix('branch_manage')->group(function () {
 // ✅ SHIFT MANAGEMENT
 Route::prefix('shift_manage')->group(function () {
     Route::get('/list', [ShiftController::class, 'index']);
+    Route::post('/add', [ShiftController::class, 'add']);
     Route::post('/store', [ShiftController::class, 'store']);
     Route::get('/edit/{uid}', [ShiftController::class, 'edit']);
     Route::put('/update/{uid}', [ShiftController::class, 'update']);

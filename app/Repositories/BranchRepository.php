@@ -20,7 +20,7 @@ class BranchRepository implements BranchInterface
         return $this->model->all();
     }
 
-    public function getById($uid)
+    public function getByUid($uid)
     {
         return $this->model->where('uid', $uid)->first();
     }

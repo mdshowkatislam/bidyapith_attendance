@@ -42,7 +42,7 @@ class ShiftSetting extends Model
      public function branch()
     {
         return $this->belongsTo(Branch::class, 'branch_code', 'branch_code')
-        ->select('id','uid','branch_name_en','branch_name_bn','head_of_branch_id');
+        ->select('id','uid','branch_code','branch_name_en','branch_name_bn','head_of_branch_id');
     }
 }
 

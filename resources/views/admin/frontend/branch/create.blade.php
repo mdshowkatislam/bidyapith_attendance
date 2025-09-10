@@ -22,81 +22,92 @@
                 <!-- Branch Id -->
                 <div class="col-md-6 mb-3">
                     <label for="branch_name"
-                           class="form-label">Branch Id</label>
+                           class="form-label">Branch Code <span class="text-danger">*</span> </label>
                     <input type="integer"
-                           name="branch_id"
+                           name="branch_code"
                            class="form-control"
-                           id="branch_id">
+                           id="branch_code">
                     <span class="text-danger error-text"
-                          data-error="branch_id"></span>
+                          data-error="branch_code"></span>
 
                 </div>
-                <!-- Branch Name -->
+                <!-- Branch Name English -->
                 <div class="col-md-6 mb-3">
                     <label for="branch_name"
-                           class="form-label">Branch Name</label>
+                           class="form-label">Branch Name(English) <span class="text-danger">*</span></label>
                     <input type="text"
-                           name="branch_name"
+                           name="branch_name_en"
                            class="form-control"
-                           id="branch_name">
+                           id="branch_name_en">
                     <span class="text-danger error-text"
-                          data-error="branch_name"></span>
+                          data-error="branch_name_en"></span>
 
                 </div>
-
-                <!-- Start Time -->
+                <!-- Branch Name Bangla -->
                 <div class="col-md-6 mb-3">
-                    <label for="start_time"
-                           class="form-label">Start Time</label>
-                    <input type="time"
-                           name="start_time"
+                    <label for="branch_name"
+                           class="form-label">Branch Name(Bangla)</label>
+                    <input type="text"
+                           name="branch_name_bn"
                            class="form-control"
-                           id="start_time">
+                           id="branch_name_bn">
                     <span class="text-danger error-text"
-                          data-error="start_time"></span>
+                          data-error="branch_name_bn"></span>
 
                 </div>
-
-                <!-- End Time -->
+                <!-- Branch Location -->
                 <div class="col-md-6 mb-3">
-                    <label for="end_time"
-                           class="form-label">End Time</label>
-                    <input type="time"
-                           name="end_time"
+                    <label for="branch_name"
+                           class="form-label">Branch Location</label>
+                    <input type="text"
+                           name="branch_location"
                            class="form-control"
-                           id="end_time">
+                           id="branch_location">
                     <span class="text-danger error-text"
-                          data-error="end_time"></span>
+                          data-error="branch_location"></span>
 
                 </div>
+                <!-- Branch Head -->
+                <div class="col-md-6 mb-3">
+                    <label for="branch_head"
+                           class="form-label">Branch Head</label>
+                    <input type="integer"
+                           name="head_of_branch_id"
+                           class="form-control"
+                           id="head_of_branch_id">
+                    <span class="text-danger error-text"
+                          data-error="head_of_branch_id"></span>
 
+                </div>
+                <!-- Description -->
+                <div class="col-md-6 mb-3">
+                    <label for="eiin"
+                           class="form-label">Eiin Number</label>
+                    <input type="text"
+                           name="eiin"
+                           class="form-control"
+                           id="eiin">
+                    <span class="text-danger error-text"
+                          data-error="eiin"></span>
+                </div>
                 <!-- Status -->
                 <div class="col-md-6 mb-3">
                     <label for="status"
                            class="form-label">Status</label>
-                    <select name="status"
+                    <select name="rec_status"
                             class="form-control"
-                            id="status">
+                            id="rec_status">
                         <option value="1">Active</option>
                         <option value="0">Inactive</option>
                     </select>
                 </div>
 
-                <!-- Description -->
-                <div class="col-md-12 mb-3">
-                    <label for="description"
-                           class="form-label">Description</label>
-                    <textarea name="description"
-                              class="form-control"
-                              id="description"
-                              rows="3"></textarea>
-                </div>
 
                 <!-- Buttons -->
                 <div class="col-md-12">
                     <button type="submit"
-                            class="btn btn-success saveButton">Save Shift</button>
-                    <a href="{{ route('shift.index') }}"
+                            class="btn btn-success saveButton">Save Branch</button>
+                    <a href="{{ route('branch.index') }}"
                        class="btn btn-secondary">Cancel</a>
                 </div>
             </div>
@@ -104,11 +115,13 @@
     </div>
 @endsection
 
+
 @section('scripts')
     <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
 
     <script>
         $(document).ready(function() {
+            alert('io');
             $('#formData').on("submit", function(e) {
                 e.preventDefault();
                 // Reset messages
@@ -116,63 +129,50 @@
 
                 $("#error-message").addClass('d-none').text('');
 
-
-                var shiftName = $("#shift_name").val().trim();
-                let startTimeRaw = $('input[name="start_time"]').val(); // e.g., "14:30"
-                let endTimeRaw = $('input[name="end_time"]').val();
-
-                // Convert to "h:i A" format (e.g., "02:30 PM")
-                function convertToAmPm(time24) {
-                    if (!time24) return '';
-                    let [hour, minute] = time24.split(':');
-                    hour = parseInt(hour, 10);
-                    const ampm = hour >= 12 ? 'PM' : 'AM';
-                    hour = hour % 12 || 12;
-                    const hourStr = hour < 10 ? '0' + hour : hour; // ✅ Add leading zero
-                    return `${hourStr}:${minute} ${ampm}`;
-                }
-                const startTimeFormatted = convertToAmPm(startTimeRaw);
-                const endTimeFormatted = convertToAmPm(endTimeRaw);
-
-
-                var formStatus = $("#status").val();
-                var formText = $("#description").val().trim();
-
+                var branchCode = $("#branch_code").val().trim();
+                var branchNameEn = $("#branch_name_en").val().trim();
+                var branchNameBn = $("#branch_name_bn").val().trim();
+                var branchLocation = $("#branch_location").val().trim();
+                var headOfBranchId = $("#head_of_branch_id").val().trim();
+                var formStatus = $("#rec_status").val();
+                var formEiin = $("#eiin").val().trim();
 
 
                 let isValid = true;
-                if (shiftName === "") {
+                if (branchNameEn === "") {
                     isValid = false;
-                    $("#shift_name").next(".error-text").text("Shift Name is Requeird !");
+                    $("#branch_name_en").next(".error-text").text("Branch Name (English) is Required !");
 
                 }
-                if (startTimeRaw === "") {
+                if (branchCode === "") {
                     isValid = false;
-                    $("#start_time").next(".error-text").text("Start Time is Requeird !");
+                    $("#branch_code").next(".error-text").text("Branch Code is Required !");
 
                 }
-                if (endTimeRaw === "") {
-                    isValid = false;
-                    $("#end_time").next(".error-text").text("End Time is Requeird !");
-
-                }
-
+                // If the form is valid, proceed with AJAX submission
+                alert('sss');
                 if (isValid) {
                     $.ajax({
-                        url: "http://attendance2.localhost.com/api/shift_manage/store",
+                        url: "http://localhost:8000/branch/store",
                         type: "POST",
-                        data: {
-                            shift_name: shiftName,
-                            start_time: startTimeFormatted,
-                            end_time: endTimeFormatted,
-                            status: formStatus,
-                            description: formText
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
                         },
+                        data: {
+                            branch_code: branchCode,
+                            branch_name_en: branchNameEn,
+                            branch_name_bn: branchNameBn,
+                            branch_location: branchLocation,
+                            head_of_branch_id: headOfBranchId,
+                            status: formStatus,
+                            eiin: formEiin
+                        },
+
 
                         success: function(response) {
 
                             localStorage.setItem('success_msg', response.message);
-                            window.location.href = "{{ route('shift.index') }}";
+                            window.location.href = "{{ route('branch.index') }}";
                         },
                         error: function(xhr) {
                             if (xhr.status === 422) {

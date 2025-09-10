@@ -36,13 +36,13 @@
                 @forelse ($branches as $branch)
                     <tr>
                         <td>{{ $branch['id'] }}</td>
-                        <td>{{ $branch['branch_name'] }}</td>
+                        <td>{{ $branch['branch_name_en'] }}</td>
                         <td>{{ $branch['branch_location'] }}</td>
                         <td>{{ $branch['head_of_branch_id'] }}</td>
-                        <td>{{ $branch['status'] == 1 ? 'Active' : 'Inactive' }}</td>
+                        <td>{{ $branch['rec_status'] == 1 ? 'Active' : 'Inactive' }}</td>
                         <td>
-                            <a href="{{ route('branch.edit', $branch['id']) }}" class="btn btn-sm btn-primary">Edit</a>
-                            <a href="{{ route('branch.destroy', $branch['id']) }}"
+                            <a href="{{ route('branch.edit', $branch['uid']) }}" class="btn btn-sm btn-primary">Edit</a>
+                            <a href="{{ route('branch.destroy', $branch['uid']) }}"
                                onclick="return confirm('Are you sure?')"
                                class="btn btn-sm btn-danger">Delete</a>
                         </td>

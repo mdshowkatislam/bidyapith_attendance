@@ -7,6 +7,7 @@ use App\Models\FlexibleTimeGroup;
 use App\Models\ShiftSetting;
 use App\Models\SpecialWorkingday;
 use App\Models\WorkDay;
+use App\Models\Branch; // Add this import
 use Illuminate\Database\Eloquent\Model;
 
 class Group extends Model
@@ -31,6 +32,18 @@ class Group extends Model
         return $this->belongsTo(ShiftSetting::class, 'shift_id');
     }
     
+    // Add branch relationship through shift
+    public function branch()
+    {
+        return $this->hasOneThrough(
+            Branch::class,
+            ShiftSetting::class,
+            'id', // Foreign key on ShiftSetting table
+            'branch_code', // Foreign key on Branch table
+            'shift_id', // Local key on Group table
+            'branch_code' // Local key on ShiftSetting table
+        );
+    }
 
     public function flexibleTime()
     {
@@ -43,7 +56,6 @@ class Group extends Model
     }
 
     // Accessor for readable status
-
     public function getStatusTextAttribute()
     {
         return $this->status ? 'Active' : 'Inactive';
@@ -58,6 +70,12 @@ class Group extends Model
     // Accessor for shift name
     public function getShiftNameAttribute()
     {
-        return optional($this->shift)->name ?? 'N/A';
+        return optional($this->shift)->shift_name_en ?? 'N/A';
+    }
+
+    // Accessor for branch name
+    public function getBranchNameAttribute()
+    {
+        return optional($this->branch)->branch_name_en ?? 'N/A';
     }
 }

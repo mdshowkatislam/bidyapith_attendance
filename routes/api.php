@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\AccessDBController;  // AccsessDBController
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\AttendanceStatusController;
+use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\DatabaseManageController;
 use App\Http\Controllers\Api\DateShiftAttendanceController;
 use App\Http\Controllers\Api\EmployeeGroupController;
@@ -11,7 +12,6 @@ use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\GroupSpecialWorkdayController;
 use App\Http\Controllers\Api\HolidayController;
 use App\Http\Controllers\Api\ShiftController;
-use App\Http\Controllers\Api\BranchController;
 use App\Http\Controllers\Api\SpecialWorkingdayController;
 use App\Http\Controllers\Api\WorkdayController;
 use App\Http\Controllers\Api\WorkdayGroupController;
@@ -54,7 +54,6 @@ Route::prefix('day_manage')->group(function () {
     Route::delete('/delete/{id}', [WorkdayController::class, 'destroy']);
 });
 
-
 // ✅ GROUP MANAGEMENT
 Route::prefix('group_manage')->group(function () {
     Route::get('/list', [GroupController::class, 'index']);
@@ -65,6 +64,20 @@ Route::prefix('group_manage')->group(function () {
     Route::put('/update/{id}', [GroupController::class, 'update']);
     Route::delete('/delete/{group}', [GroupController::class, 'destroy']);
     Route::post('/toggle-status/{id}', [GroupController::class, 'toggleStatus']);
+
+    Route::get('/shifts-by-branch/{branchCode}', function ($branchCode) {
+        // Add CORS headers
+        header('Access-Control-Allow-Origin: http://localhost:8000');
+        header('Access-Control-Allow-Methods: GET, OPTIONS');
+        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+
+        $shifts = \App\Models\ShiftSetting::where('branch_code', $branchCode)
+            ->where('status', 1)
+            ->select('id', 'shift_name_en', 'shift_name_bn')
+            ->get();
+
+        return response()->json(['shifts' => $shifts]);
+    });
 });
 
 // ✅ Employee Group MANAGEMENT
@@ -146,9 +159,7 @@ Route::get('/date/shift/attendance', [AttendanceController::class, 'index']);
 
 Route::get('/date-shift-wise-attendance', [DateShiftAttendanceController::class, 'index']);
 
-
 Route::get('/get-departments', [DateShiftAttendanceController::class, 'getDepartments']);
 Route::get('/get-sections', [DateShiftAttendanceController::class, 'getSections']);
-
 
 // });

@@ -1,5 +1,4 @@
 @extends('admin.master')
-
 @section('plugins.Select2', true)
 @section('admin_content')
 
@@ -20,119 +19,143 @@
     </style>
 
     <div class="container">
-        <h2 class="text-info">Edit Group</h2>
+        <h2 class="text-success"
+            style="font-family:'Courier New', Courier, monospace">Edit Group</h2>
 
         <div id="message"></div>
         <div class="row g-3">
             <!-- Group Name -->
             <div class="col-md-4 mb-3">
-                <label>Group Name</label>
-                <input type="text"
-                       id="group_name"
-                       value="{{ $group['group_name'] }}"
-                       class="form-control">
+                <div class="form-group">
+                    <label for="group_name">Group Name <span class="text-danger">*</span></label>
+                    <input type="text"
+                           id="group_name"
+                           value="{{ $group['group_name'] }}"
+                           class="form-control">
+                </div>
             </div>
 
             <!-- Description -->
             <div class="col-md-4 mb-3">
-                <label>Description</label>
-                <textarea id="description"
-                          class="form-control">{{ $group['description'] }}</textarea>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description"
+                              class="form-control">{{ $group['description'] }}</textarea>
+                </div>
             </div>
 
-            <!-- Shift -->
-            <div class="col-md-4 mb-3">
-                <label>Select Shift</label>
-                <select id="shift_id"
-                        class="form-control select2bs4">
-                    <option value="">-- Choose Shift --</option>
-                    @foreach ($shifts as $item)
-                        <option value="{{ $item['id'] }}"
-                                {{ $item['id'] == $group['shift_id'] ? 'selected' : '' }}>
-                            {{ $item['shift_name'] }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-            {{-- @dd($workDays[0]) --}}
-            <!-- Work Days -->
-            <div class="col-md-6 mb-3">
-                <label>Work Days</label>
-                <select id="work_days"
-                        class="form-control select2"
-                        multiple>
-
-                    @foreach ($workDays as $wd)
-                        <option value="{{ $wd['id'] }}"
-                                {{ in_array($wd['id'], array_column($group['work_days'], 'id')) ? 'selected' : '' }}>
-                            {{ $wd['day_name'] }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-            @php
-                $selectedEmployeeIds = array_column($group['employees'], 'id');
-            @endphp
-
-            <div class="col-md-6 mb-3">
-                <label>Employees</label>
-                <select id="employees"
-                        class="form-control select2"
-                        multiple>
-                    @foreach ($employees as $emp)
-                        <option value="{{ $emp['id'] }}"
-                                {{ in_array($emp['id'], $selectedEmployeeIds) ? 'selected' : '' }}>
-                            {{ $emp['name'] }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-
-
+            <!-- Branch Selection -->
             <div class="col-md-4 mb-3">
                 <div class="form-group">
-                    <label for="flexible_in_time">Flexible In Time (between 1 and 59) </label>
+                    <label for="branch_code">Select Branch <span class="text-danger">*</span></label>
+                    <select id="branch_code"
+                            class="form-control select2bs4"
+                            style="width: 100%;">
+                        <option value="">-- Choose Branch --</option>
+                        @foreach ($branches as $branch)
+                            <option value="{{ $branch['branch_code'] }}"
+                                    {{ $group['shift']['branch_code'] == $branch['branch_code'] ? 'selected' : '' }}>
+                                {{ $branch['branch_code'] }} - {{ $branch['branch_name_en'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <!-- Shift Selection (Will be populated based on branch) -->
+            <div class="col-md-4 mb-3">
+                <div class="form-group">
+                    <label for="shift_id">Select Shift <span class="text-danger">*</span></label>
+                    <select id="shift_id"
+                            class="form-control select2bs4"
+                            style="width: 100%;">
+                        <option value="">-- Loading shifts... --</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Work Days -->
+            <div class="col-md-4 mb-3">
+                <div class="form-group">
+                    <label for="work_days">Work Days <span class="text-danger">*</span></label>
+                    <select id="work_days"
+                            class="form-control select2"
+                            multiple="multiple"
+                            style="width:100%">
+                        @foreach ($workDays as $wd)
+                            <option value="{{ $wd['id'] }}"
+                                    {{ in_array($wd['id'], array_column($group['work_days'], 'id')) ? 'selected' : '' }}>
+                                {{ $wd['day_name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <!-- Employees -->
+            <div class="col-md-4 mb-3">
+                <div class="form-group">
+                    <label for="employees">Employees <span class="text-danger">*</span></label>
+                    <select id="employees"
+                            class="form-control select2"
+                            multiple="multiple"
+                            style="width:100%">
+                        @foreach ($employees as $emp)
+                            <option value="{{ $emp['id'] }}"
+                                    {{ in_array($emp['id'], array_column($group['employees'], 'id')) ? 'selected' : '' }}>
+                                {{ $emp['name'] }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <!-- Flexible Times -->
+            <div class="col-md-4 mb-3">
+                <div class="form-group">
+                    <label for="flexible_in_time">Flexible In Time (1-59 minutes)</label>
                     <input type="number"
                            id="flexible_in_time"
                            class="form-control"
-                            value="{{ $group['flexible_in_time'] }}"
+                           value="{{ $group['flexible_in_time'] }}"
                            min="1"
-                           max="59" />
-
-
+                           max="59">
                 </div>
             </div>
             <div class="col-md-4 mb-3">
                 <div class="form-group">
-                    <label for="flexible_out_time">Flexible Out Time (between 1 and 59) </label>
+                    <label for="flexible_out_time">Flexible Out Time (1-59 minutes)</label>
                     <input type="number"
                            id="flexible_out_time"
                            class="form-control"
-                            value="{{ $group['flexible_out_time'] }}"
+                           value="{{ $group['flexible_out_time'] }}"
                            min="1"
-                           max="59" />
-
+                           max="59">
                 </div>
             </div>
-            <div class="col-md-3 mb-3">
+            <div class="col-md-4 mb-3">
                 <div class="form-group">
                     <label for="status">Status</label>
                     <select id="status"
                             class="form-control">
                         <option value="1"
-                                selected>Active</option>
-                        <option value="0">Inactive</option>
+                                {{ $group['status'] == 1 ? 'selected' : '' }}>Active</option>
+                        <option value="0"
+                                {{ $group['status'] == 0 ? 'selected' : '' }}>Inactive</option>
                     </select>
                 </div>
             </div>
 
             <!-- Buttons -->
-            <div class="col-12 d-flex justify-content-center mt-4">
+            <div class="col-12 d-flex justify-content-center gap-3 mt-4">
                 <button id="btnUpdate"
-                        class="btn btn-primary px-4 mr-4">Update</button>
+                        class="btn btn-primary px-4 mr-4">
+                    <i class="fas fa-save mr-2"></i> Update
+                </button>
                 <a href="{{ route('group_manage.index') }}"
-                   class="btn btn-secondary px-4">Cancel</a>
+                   class="btn btn-secondary px-4">
+                    <i class="fas fa-times mr-2"></i> Cancel
+                </a>
             </div>
         </div>
     </div>
@@ -143,67 +166,132 @@
     <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+                    
+            // Init select2
             $('.select2').select2({
                 width: '100%',
                 allowClear: true,
-                placeholder: 'Select an option'
+                placeholder: 'Select options'
             });
 
-            $('#btnUpdate').on('click', function(e) {
+            // Store current group data
+            const currentGroup = @json($group);
+            const currentBranchCode = currentGroup.shift ? currentGroup.shift.branch_code : null;
+            const currentShiftId = currentGroup.shift_id;
 
-                e.preventDefault();
+            // Function to load shifts for a branch
+            function loadShiftsForBranch(branchCode, selectedShiftId = null) {
+                const shiftDropdown = $('#shift_id');
 
-                const group_id = {{ $group['id'] }};
-
-                const group_name = $('#group_name').val().trim();
-                const description = $('#description').val().trim();
-                const shift_id = $('#shift_id').val();
-                const status = $('#status').val();
-                const flexInTimeVal = $('#flexible_in_time').val();
-                const flexOutTimeVal = $('#flexible_out_time').val();
-                const flexInTime = flexInTimeVal ? parseInt(flexInTimeVal, 10) : null;
-                const flexOutTime = flexOutTimeVal ? parseInt(flexOutTimeVal, 10) : null;
-                const work_day_ids = $('#work_days').val() || [];
-                const employee_ids = $('#employees').val() || [];
-                let errorMessage = "";
-
-                if (flexInTime !== null && (flexInTime < 1 || flexInTime > 59)) {
-                    errorMessage += "Flexible In Time must be between 1 and 59.\n";
-                }
-
-                if (flexOutTime !== null && (flexOutTime < 1 || flexOutTime > 59)) {
-                    errorMessage += "Flexible Out Time must be between 1 and 59.\n";
-                }
-
-                if (errorMessage !== "") {
-                    $('#message').html('<div class="alert alert-danger">' + errorMessage.replace(/\n/g,
-                        '<br>') + '</div>');
+                if (!branchCode) {
+                    shiftDropdown.prop('disabled', true).html(
+                        '<option value="">-- First select a branch --</option>');
                     return;
                 }
 
-                const updateUrl = "http://attendance2.localhost.com/api/group_manage/update/" + group_id;
-
-
                 $.ajax({
-                    url: updateUrl,
-                    method: 'POST',
+                    url: "/api/shifts-by-branch/" + branchCode,
+                    method: "GET",
+                    beforeSend: function() {
+                        shiftDropdown.prop('disabled', true).html(
+                            '<option value="">Loading shifts...</option>');
+                    },
+                    success: function(response) {
+                        if (response.shifts && response.shifts.length > 0) {
+                            let options = '<option value="">-- Select Shift --</option>';
+                            response.shifts.forEach(shift => {
+                                const selected = shift.id == selectedShiftId ? 'selected' : '';
+                                options +=
+                                    `<option value="${shift.id}" ${selected}>${shift.shift_name_en}</option>`;
+                            });
+                            shiftDropdown.html(options).prop('disabled', false);
+                        } else {
+                            shiftDropdown.html(
+                                    '<option value="">No shifts available for this branch</option>')
+                                .prop('disabled', false);
+                        }
+                    },
+                    error: function() {
+                        shiftDropdown.html('<option value="">Error loading shifts</option>').prop(
+                            'disabled', false);
+                    }
+                });
+            }
+
+            // Load shifts for current branch on page load
+            if (currentBranchCode) {
+                loadShiftsForBranch(currentBranchCode, currentShiftId);
+            }
+
+            // Branch change event
+            $('#branch_code').on('change', function() {
+                const branchCode = $(this).val();
+                loadShiftsForBranch(branchCode);
+            });
+
+            // Update button click
+            $('#btnUpdate').on('click', function(e) {
+                alert('apiUrl2');
+                e.preventDefault();
+
+                const group_id = {{ $group['id'] }};
+                const group_name = $('#group_name').val().trim();
+                const description = $('#description').val().trim();
+                const branch_code = $('#branch_code').val();
+                const shift_id = $('#shift_id').val();
+                const flexInTime = $('#flexible_in_time').val() ? parseInt($('#flexible_in_time').val()) :
+                    null;
+                const flexOutTime = $('#flexible_out_time').val() ? parseInt($('#flexible_out_time')
+                .val()) : null;
+                const status = $('#status').val();
+                const work_day_ids = $('#work_days').val() || [];
+                const employee_ids = $('#employees').val() || [];
+
+                // Validation
+                let errorMessage = "";
+                if (!group_name) errorMessage += "Group name is required.<br>";
+                if (!branch_code) errorMessage += "Branch selection is required.<br>";
+                if (!shift_id) errorMessage += "Shift selection is required.<br>";
+                if (work_day_ids.length === 0) errorMessage += "At least one work day is required.<br>";
+                if (employee_ids.length === 0) errorMessage += "At least one employee is required.<br>";
+                if (flexInTime && (flexInTime < 1 || flexInTime > 59)) errorMessage +=
+                    "Flexible In Time must be between 1-59.<br>";
+                if (flexOutTime && (flexOutTime < 1 || flexOutTime > 59)) errorMessage +=
+                    "Flexible Out Time must be between 1-59.<br>";
+
+                if (errorMessage) {
+                    $('#message').html('<div class="alert alert-danger">' + errorMessage + '</div>');
+                    return;
+                }
+                var apiUrl = "http://attendance2.localhost.com/api/group_manage/update/" + group_id;
+                // AJAX request
+                alert("apiUrl3");
+                $.ajax({
+                    url: apiUrl,
+                    method: "POST",
                     data: {
                         _token: "{{ csrf_token() }}",
-                        group_name,
-                        description,
-                        shift_id,
-                        status,
-                        flexInTime,
-                        flexOutTime,
-                        work_day_ids,
-                        employee_ids,
-                        _method: "PUT"
+                        group_name: group_name,
+                        description: description,
+                        branch_code: branch_code,
+                        shift_id: shift_id,
+                        flexible_in_time: flexInTime,
+                        flexible_out_time: flexOutTime,
+                        status: status,
+                        work_day_ids: work_day_ids,
+                        employee_ids: employee_ids,
+                        _method: 'PUT'
                     },
-                    success: function(res) {
-                        $('#message').html(
-                            '<div class="alert alert-success">Updated successfully!</div>');
-                        setTimeout(() => window.location.href =
-                            "{{ route('group_manage.index') }}", 1000);
+                    success: function(response) {
+                        if (response.status) {
+                            $('#message').html('<div class="alert alert-success">' + response
+                                .message + '</div>');
+                            setTimeout(() => window.location.href =
+                                "{{ route('group_manage.index') }}", 1500);
+                        } else {
+                            $('#message').html('<div class="alert alert-danger">' + response
+                                .message + '</div>');
+                        }
                     },
                     error: function(xhr) {
                         let errors = xhr.responseJSON?.errors;
@@ -215,7 +303,7 @@
                         } else {
                             $('#message').html(
                                 '<div class="alert alert-danger">Something went wrong.</div>'
-                            );
+                                );
                         }
                     }
                 });

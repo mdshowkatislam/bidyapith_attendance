@@ -96,17 +96,18 @@
                 <th>Flex Out Time</th>
                 <th>Total Employees</th>
                 <th>Working Days</th>
-                <th>Change Status</th> 
+                <th>Change Status</th>
                 <th>Action</th>
             </tr>
         </thead>
+
         <tbody>
             @forelse ($groups as $item)
                 <tr>
                     <td>{{ $item['id'] }}</td>
                     <td>{{ $item['group_name'] }}</td>
                     <td>{{ $item['description'] }}</td>
-                    <td>{{ $item['shift_name'] }}</td>
+                    <td>{{ $item['shift']['shift_name_en'] }}</td>
                     <td>{{ $item['flexible_in_time'] }} min</td>
                     <td>{{ $item['flexible_out_time'] }} min</td>
                     <td style="width:10%"
@@ -114,7 +115,7 @@
 
                     <td>
                         @forelse ($item['work_days'] as $day)
-                            <span class="badge bg-primary">{{ $day }}</span>
+                            <span class="badge bg-primary">{{ $day['day_name'] }}</span>
                         @empty
                             <span class="text-muted">No Working days found</span>
                         @endforelse

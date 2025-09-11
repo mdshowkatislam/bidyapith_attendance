@@ -35,6 +35,7 @@ class BaseGroupController extends Controller
         ])
             ->withOptions(['verify' => false])
             ->get('http://attendance2.localhost.com/api/group_manage/add');
+            // dd($response->json());
 
         $message = $response->json()['message'] ?? 'success';
 
@@ -49,8 +50,9 @@ class BaseGroupController extends Controller
         $workDays = $response->json()['workDays'] ?? [];
         $employees = $response->json()['employees'] ?? [];
         $shifts = $response->json()['shifts'] ?? [];
+        $branches = $response->json()['branches'] ?? [];
 
-        return view('admin.frontend.group.create', compact('workDays', 'employees', 'shifts'));
+        return view('admin.frontend.group.create', compact('workDays', 'employees', 'shifts', 'branches'));
     }
 
     private function getGroupData($id)
@@ -88,13 +90,16 @@ class BaseGroupController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'day_name' => 'required|string|unique:work_days,day_name',
-            'is_weekend' => 'required|boolean',
-        ]);
+        // $validated = $request->validate([
+        //     'day_name' => 'required|string|unique:work_days,day_name',
+        //     'is_weekend' => 'required|boolean',
+        // ]);
 
-        Http::withOptions(['verify' => false])
-            ->post('http://attendance2.localhost.com/api/group_manage/store', $validated);
+
+        $response = Http::withOptions(['verify' => false])
+            ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
+        // dd($response->json()['status']);
+        \Log::info('Group Store Response:', $response->json());
 
         return redirect()->route('work_day.create')->with('success', 'Work day created successfully.');
     }
@@ -109,8 +114,9 @@ class BaseGroupController extends Controller
         $employees = $response->json()['employees'] ?? null;
         $workDays = $response->json()['workDays'] ?? null;
         $shifts = $response->json()['shifts'] ?? null;
-       
-        return view('admin.frontend.group.edit', compact('group', 'shifts', 'employees', 'workDays'));
+        $branches = $response->json()['branches'] ?? null;
+
+        return view('admin.frontend.group.edit', compact('group', 'shifts', 'employees', 'workDays', 'branches'));
     }
 
   

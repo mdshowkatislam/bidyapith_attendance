@@ -35,7 +35,7 @@ class BaseGroupController extends Controller
         ])
             ->withOptions(['verify' => false])
             ->get('http://attendance2.localhost.com/api/group_manage/add');
-            // dd($response->json());
+        // dd($response->json());
 
         $message = $response->json()['message'] ?? 'success';
 
@@ -62,8 +62,6 @@ class BaseGroupController extends Controller
 
         return $response->json()['group'] ?? null;
     }
-
-   
 
     public function previewPdfView($id)
     {
@@ -95,13 +93,12 @@ class BaseGroupController extends Controller
         //     'is_weekend' => 'required|boolean',
         // ]);
 
-
         $response = Http::withOptions(['verify' => false])
             ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
         // dd($response->json()['status']);
-        \Log::info('Group Store Response:', $response->json());
+        // \Log::info('Group Store Response:', $response->json());
 
-        return redirect()->route('work_day.create')->with('success', 'Work day created successfully.');
+        return redirect()->route('group_manage.index')->with('success', 'Group created successfully.');
     }
 
     public function edit($id)
@@ -115,11 +112,40 @@ class BaseGroupController extends Controller
         $workDays = $response->json()['workDays'] ?? null;
         $shifts = $response->json()['shifts'] ?? null;
         $branches = $response->json()['branches'] ?? null;
+        // dd($shifts);
 
         return view('admin.frontend.group.edit', compact('group', 'shifts', 'employees', 'workDays', 'branches'));
     }
 
-  
+ public function update($id, Request $request)
+{
+    try {
+        $response = Http::withOptions(['verify' => false])
+            ->post("http://attendance2.localhost.com/api/group_manage/update/{$id}", $request->all());
+
+        $data = $response->json();
+
+        if (!$data || ($data['status'] ?? false) === false) {
+            return response()->json([
+                'status' => false,
+                'message' => $data['message'] ?? 'Group update failed.',
+                'errors' => $data['errors'] ?? null
+            ], 422);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => $data['message'] ?? 'Group updated successfully.'
+        ], 200);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong: ' . $e->getMessage()
+        ], 500);
+    }
+}
+
 
     public function destroy($id)
     {

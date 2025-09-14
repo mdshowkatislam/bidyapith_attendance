@@ -190,7 +190,7 @@
                 }
 
                 $.ajax({
-                    url: "/api/shifts-by-branch/" + branchCode,
+                    url: "/api/group_manage/shifts-by-branch/" + branchCode,
                     method: "GET",
                     beforeSend: function() {
                         shiftDropdown.prop('disabled', true).html(
@@ -231,7 +231,7 @@
 
             // Update button click
             $('#btnUpdate').on('click', function(e) {
-                alert('apiUrl2');
+              
                 e.preventDefault();
 
                 const group_id = {{ $group['id'] }};
@@ -263,12 +263,14 @@
                     $('#message').html('<div class="alert alert-danger">' + errorMessage + '</div>');
                     return;
                 }
-                var apiUrl = "http://attendance2.localhost.com/api/group_manage/update/" + group_id;
-                // AJAX request
-                alert("apiUrl3");
+            //    var apiUrl = "{{ route('group_manage.update', ['id' => $group['id']]) }}";
+            
+          
+            
                 $.ajax({
-                    url: apiUrl,
+                         url:"{{ route('group_manage.update', ['id' => $group['id']]) }}",
                     method: "POST",
+     
                     data: {
                         _token: "{{ csrf_token() }}",
                         group_name: group_name,

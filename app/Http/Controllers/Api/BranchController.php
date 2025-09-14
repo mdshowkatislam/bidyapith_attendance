@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -65,7 +66,7 @@ class BranchController extends Controller
                 Response::HTTP_CREATED
             );
         } catch (\Exception $e) {
-            \Log::error('Branch creation failed: ' . $e->getMessage());
+            Log::error('Branch creation failed: ' . $e->getMessage());
 
             return $this->errorResponse(
                 'Failed to create branch',
@@ -77,20 +78,33 @@ class BranchController extends Controller
     public function update($uid, Request $request)
     {
         
+        $branch = Branch::where('uid', $uid)->first();
+    
+        if (!$branch) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Branch not found'
+            ], 404);
+        }
+
+        // Validate request
         $validator = Validator::make($request->all(), [
             'branch_code' => [
                 'required',
                 'integer',
-                Rule::unique('branches')->ignore($uid, 'uid')
+                Rule::unique('branches', 'branch_code')->ignore($uid, 'uid'),
             ],
             'branch_name_en' => [
-                'required',
+                'nullable',
                 'string',
-                Rule::unique('branches')->ignore($uid, 'uid')
+                Rule::unique('branches', 'branch_name_en')->ignore($uid, 'uid'),
             ],
-           
+            'branch_name_bn' => ['nullable', 'string'],
+            'branch_location' => ['nullable', 'string'],
+            'head_of_branch_id' => ['nullable', 'integer'],
+            'eiin' => ['nullable', 'integer'],
+            'rec_status' => ['nullable', 'integer'],
         ]);
-        
 
         if ($validator->fails()) {
             return response()->json([
@@ -101,27 +115,28 @@ class BranchController extends Controller
         }
 
         try {
-            $branch = $this->branchService->updateByUid($uid, $request->all());
+            // Cast numeric fields properly
+            $data = $request->all();
+            $data['branch_code'] = isset($data['branch_code']) ? (int) $data['branch_code'] : null;
+            $data['head_of_branch_id'] = isset($data['head_of_branch_id']) ? (int) $data['head_of_branch_id'] : null;
+            $data['eiin'] = isset($data['eiin']) ? (int) $data['eiin'] : null;
+            $data['rec_status'] = isset($data['rec_status']) ? (int) $data['rec_status'] : 1;
 
-            if (!$branch) {
-                return $this->errorResponse(
-                    'Branch not found',
-                    Response::HTTP_NOT_FOUND
-                );
-            }
+            // Update branch
+            $branch->update($data);
 
-            return $this->successResponseWithData(
-                $branch,
-                'Branch Updated Successfully',
-                Response::HTTP_OK
-            );
+            return response()->json([
+                'status' => true,
+                'message' => 'Branch updated successfully',
+                'data' => $branch
+            ], 200);
         } catch (\Exception $e) {
-            \Log::error('Branch update failed: ' . $e->getMessage());
+            Log::error('Branch update failed: ' . $e->getMessage());
 
-            return $this->errorResponse(
-                'Failed to update branch',
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to update branch'
+            ], 500);
         }
     }
 

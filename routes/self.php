@@ -78,7 +78,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::post('/store', [BaseGroupController::class, 'store'])->name('group_manage.store');
         Route::get('/edit/{id}', [BaseGroupController::class, 'edit'])->name('group_manage.edit');
-        // Route::put('/update/{id}', [BaseGroupController::class, 'update'])->name('group_manage.update');
+        Route::put('/update/{id}', [BaseGroupController::class, 'update'])->name('group_manage.update');
         Route::delete('/delete/{id}', [BaseGroupController::class, 'destroy'])->name('group_manage.delete');
     });
 

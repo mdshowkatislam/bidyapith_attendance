@@ -241,9 +241,11 @@ class GroupController extends Controller
         ], 200);
     }
 
-    public function update(Request $request, $id)
+    public function update( $id,Request $request)
     {
+       
         $group = Group::findOrFail($id);
+        // Log::info($group);
 
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name,' . $group->id,

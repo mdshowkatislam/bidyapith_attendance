@@ -7,6 +7,8 @@ use App\Http\Controllers\Controller;
 use App\Models\ShiftSetting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+
 
 class BaseShiftController extends Controller
 {
@@ -36,12 +38,12 @@ class BaseShiftController extends Controller
             return view('admin.frontend.shift.index', compact('shifts'));
         } catch (\Illuminate\Http\Client\ConnectionException $e) {
             // Handle connection errors
-            \Log::error('API Connection Error: ' . $e->getMessage());
+            Log::error('API Connection Error: ' . $e->getMessage());
             return view('admin.frontend.shift.index', ['shifts' => []])
                 ->with('error', 'Unable to connect to the API service.');
         } catch (\Exception $e) {
             // Handle other errors
-            \Log::error('Shift Index Error: ' . $e->getMessage());
+           Log::error('Shift Index Error: ' . $e->getMessage());
             return view('admin.frontend.shift.index', ['shifts' => []])
                 ->with('error', 'An error occurred while fetching shifts.');
         }
@@ -51,13 +53,13 @@ class BaseShiftController extends Controller
     {
         $response = Http::post(url('http://attendance2.localhost.com/api/shift_manage/add'));
         $branch = $response->json()['branch'];
-        // dd($branch);
+           Log::info($branch);
         return view('admin.frontend.shift.create', compact('branch'));
     }
 
     public function store(Request $request)
     {
-        // \Log::info('Shift Store Request:', $request->all());
+         Log::info('Shift Store Request:', $request->all());
         Http::post(url('http://attendance2.localhost.com/api/shift_manage/store'), $request->all());
         return redirect()->route('shift.index');
     }

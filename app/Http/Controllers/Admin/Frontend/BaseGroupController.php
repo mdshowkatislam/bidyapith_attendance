@@ -56,7 +56,7 @@ class BaseGroupController extends Controller
     }
 
     private function getGroupData($id)
-    {
+    {\Log::info('class details');
         $response = Http::withOptions(['verify' => false])
             ->get("http://attendance2.localhost.com/api/group_manage/details/{$id}");
 
@@ -65,6 +65,7 @@ class BaseGroupController extends Controller
 
     public function previewPdfView($id)
     {
+       \Log::info('base details');
         $group = $this->getGroupData($id);
         // dd($group);
         if (!$group) {
@@ -88,17 +89,31 @@ class BaseGroupController extends Controller
 
     public function store(Request $request)
     {
-        // $validated = $request->validate([
-        //     'day_name' => 'required|string|unique:work_days,day_name',
-        //     'is_weekend' => 'required|boolean',
-        // ]);
+        
+         try {
 
         $response = Http::withOptions(['verify' => false])
             ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
-        // dd($response->json()['status']);
-        // \Log::info('Group Store Response:', $response->json());
+        $data = $response->json();
+          if (!$data || ($data['status'] ?? false) === false) {
+            return response()->json([
+                'status' => false,
+                'message' => $data['message'] ?? 'Group Creation failed.',
+                'errors' => $data['errors'] ?? null
+            ], 422);
+        }
+           return response()->json([
+            'status' => true,
+            'message' => $data['message'] ?? 'Group updated successfully.'
+        ], 200);
+        } catch (\Exception $e) {
+        return response()->json([
+            'status' => false,
+            'message' => 'Something went wrong: ' . $e->getMessage()
+        ], 500);
+    }
 
-        return redirect()->route('group_manage.index')->with('success', 'Group created successfully.');
+       
     }
 
     public function edit($id)

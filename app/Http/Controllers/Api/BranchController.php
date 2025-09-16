@@ -32,11 +32,13 @@ class BranchController extends Controller
         //   \Log::info( $branches);
         if (count($branches) > 0) {
             return response()->json([
+                    'status' => true,
                 'message' => 'Branches fetched successfully.',
                 'branches' => $branches,
             ], 200);
         }
         return response()->json([
+            'status' => false,
             'message' => 'Branches not found.'
         ], 404);
     }
@@ -69,7 +71,10 @@ class BranchController extends Controller
             Log::error('Branch creation failed: ' . $e->getMessage());
 
             return $this->errorResponse(
-                'Failed to create branch',
+                [
+                    'status' => false,
+                    'message' => 'Failed to create branch',
+                ],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
         }
@@ -82,7 +87,7 @@ class BranchController extends Controller
     
         if (!$branch) {
             return response()->json([
-                'status' => 'error',
+                'status' => false,
                 'message' => 'Branch not found'
             ], 404);
         }
@@ -108,7 +113,7 @@ class BranchController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'validation_error',
+                'status' => 'false',
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -134,71 +139,91 @@ class BranchController extends Controller
             Log::error('Branch update failed: ' . $e->getMessage());
 
             return response()->json([
-                'status' => 'error',
+                'status' => false,
                 'message' => 'Failed to update branch'
             ], 500);
         }
     }
 
-    public function getByUid($uid)
-    {
-        try {
-            $branch = $this->branchService->getByUid($uid);
-            if ($branch) {
-                return $this->successResponse($branch, Response::HTTP_OK);
-            } else {
-                return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
-            }
-        } catch (\Exception $e) {
-            return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
+   public function getByUid($uid)
+{
+    try {
+        $branch = $this->branchService->getByUid($uid);
+      Log::info($branch); 
+        if ($branch) {
+            return response()->json([
+                'status'  => true,
+                'message' => 'Branch found successfully!',
+                'data'    => $branch
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Sorry, No Data found!'
+            ], Response::HTTP_NOT_FOUND);
         }
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Sorry, something went wrong!',
+            'error'   => $e->getMessage() 
+        ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
+}
 
-    public function edit($uid)
-    {
-        // \Log::info('Edit method called with UID: ' . $uid);
-        try {
-            $branch = $this->branchService->getByUid($uid);
-            //   \Log::info(  $branch );exit();
 
-            if ($branch) {
-                // $branchHeadTeacher=Employee::where('is_teacher',1)
-                // ->where('is_branchHead',1)->where('rec_status',1)
-                // ->select('id','name')->get(); // this could be done using relation in future or from teacher table.
-                //   $data=['branch'=>$branch,'branchHeadTeacher'=>$branchHeadTeacher];
-                // return $this->successResponse($data, Response::HTTP_OK);
-                return $this->successResponse($branch, Response::HTTP_OK);
-            } else {
-                return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
-            }
-        } catch (\Exception $e) {
-            return $this->errorResponse('Sorry , No Data found !', Response::HTTP_NOT_FOUND);
+ public function edit($uid)
+{
+    try {
+        $branch = $this->branchService->getByUid($uid);
+
+        if ($branch) {
+            return response()->json([
+               'status'  => true,
+               'message' => 'Branch found successfully!',
+                'data'   => $branch
+            ], Response::HTTP_OK);
+        } else {
+            return response()->json([
+                'status'  => false,
+                'message' => 'Sorry, No Data found!'
+            ], Response::HTTP_NOT_FOUND);
         }
+    } catch (\Exception $e) {
+        return response()->json([
+            'status'  => false,
+            'message' => 'Sorry, something went wrong! The error is:'.$e->getMessage(),
+        ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
+}
 
-    public function destroy($uid)
-    {
-        try {
-            $result = $this->branchService->deleteByUid($uid);
 
-            if ($result) {
-                return $this->successResponse(
-                    'Branch Deleted Successfully',
-                    Response::HTTP_OK
-                );
-            }
+   public function destroy($uid)
+{
+    try {
+        $result = $this->branchService->deleteByUid($uid);
 
-            return $this->errorResponse(
-                'Branch not found',
-                Response::HTTP_NOT_FOUND
-            );
-        } catch (\Exception $e) {
-            \Log::error('Branch deletion failed: ' . $e->getMessage());
-
-            return $this->errorResponse(
-                'Failed to delete branch',
-                Response::HTTP_INTERNAL_SERVER_ERROR
-            );
+        if ($result) {
+            return response()->json([
+                   'status'  => true,
+                'message' => 'Branch deleted successfully'
+            ], Response::HTTP_OK);
         }
+
+        return response()->json([
+            'status'  => false,
+            'message' => 'Branch not found'
+        ], Response::HTTP_NOT_FOUND);
+
+    } catch (\Exception $e) {
+        Log::error('Branch deletion failed: ' . $e->getMessage());
+
+        return response()->json([
+            'status'  => false,
+            'message' => 'Failed to delete branch: '.$e->getMessage(),
+       
+        ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }
+}
+
 }

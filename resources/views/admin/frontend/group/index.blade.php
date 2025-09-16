@@ -140,7 +140,7 @@
                                 data-bs-toggle="tooltip"
                                 data-bs-placement="top"
                                 title="Details"><a style="color:white !important;"
-                               href="{{ route('group_manage.pdf', $item['id']) }}"><i class="fa-solid fa-eye"></i></a>
+                               href="{{ route('group_manage.details', $item['id']) }}"><i class="fa-solid fa-eye"></i></a>
                         </button>
                         <button class="btn btn-success btn-sm mb-1"
                                 data-bs-custom-class="custom-tooltip-green"

@@ -67,9 +67,9 @@ Route::prefix('group_manage')->group(function () {
 
     Route::get('/shifts-by-branch/{branchCode}', function ($branchCode) {
         // Add CORS headers
-        header('Access-Control-Allow-Origin: http://localhost:8000');
-        header('Access-Control-Allow-Methods: GET, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, Authorization');
+        // header('Access-Control-Allow-Origin: http://localhost:8000');
+        // header('Access-Control-Allow-Methods: GET, OPTIONS');
+        // header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
         $shifts = \App\Models\ShiftSetting::where('branch_code', $branchCode)
             ->where('status', 1)

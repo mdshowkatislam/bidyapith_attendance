@@ -25,6 +25,7 @@ class ShiftController extends Controller
             ], 200);
         }
         return response()->json([
+            'status' => false,
             'message' => 'Shift not found.'
         ], 404);
     }
@@ -35,11 +36,13 @@ class ShiftController extends Controller
 
         if (count($branch) > 0) {
             return response()->json([
+                'status' => true,
                 'message' => 'Branches fetched successfully.',
                 'branch' => $branch,
             ], 200);
         }
         return response()->json([
+            'status' => false,
             'message' => 'Branch not found.'
         ], 404);
     }
@@ -52,6 +55,7 @@ class ShiftController extends Controller
         ]);
 
         // \Log::info($request->all());
+        // exit();
 
         $validator = Validator::make($request->all(), [
             'branch_code' => ['required', 'integer', Rule::exists('branches', 'branch_code')],
@@ -69,9 +73,9 @@ class ShiftController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Log::info('Validation failed', $validator->errors()->toArray());
+        
             return response()->json([
-                'status' => 'validation_error',
+                'status' => false,
                 'message' => 'Validation failed',
                 'errors' => $validator->errors()
             ], 422);
@@ -86,7 +90,7 @@ class ShiftController extends Controller
             try {
                 $start = Carbon::createFromFormat('H:i', $validated['start_time']);
             } catch (\Exception $e) {
-                return response()->json(['errors' => ['start_time' => 'Invalid start time format.']], 422);
+                return response()->json([ 'status'=>false,'message' => ['start_time' => 'Invalid start time format.']], 422);
             }
         }
 
@@ -96,12 +100,13 @@ class ShiftController extends Controller
             try {
                 $end = Carbon::createFromFormat('H:i', $validated['end_time']);
             } catch (\Exception $e) {
-                return response()->json(['errors' => ['end_time' => 'Invalid end time format.']], 422);
+                return response()->json(['status'=>false,'message' =>  'Invalid end time format.'], 422);
             }
         }
         // If start and end time are equal
         if ($start->eq($end)) {
             return response()->json([
+                 'status'=>false,
                 'errors' => [
                     'start_time' => 'Start time and end time cannot be the same.',
                     'end_time' => 'Start time and end time cannot be the same.',
@@ -117,6 +122,7 @@ class ShiftController extends Controller
         ShiftSetting::create($request->all());
 
         return response()->json([
+            'status'=>true,
             'message' => 'Shift saved successfully!'
         ], 201);
     }
@@ -145,9 +151,8 @@ class ShiftController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'validation_error',
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
+               'status' => false,
+                'message' => 'Validation failed: '.$validator->errors()->first(),
             ], 422);
         }
 
@@ -160,7 +165,7 @@ class ShiftController extends Controller
             try {
                 $start = Carbon::createFromFormat('H:i', $validated['start_time']);
             } catch (\Exception $e) {
-                return response()->json(['errors' => ['start_time' => 'Invalid start time format.']], 422);
+                return response()->json(['status' => false,'message' => 'Invalid start time format.'], 422);
             }
         }
 
@@ -170,17 +175,15 @@ class ShiftController extends Controller
             try {
                 $end = Carbon::createFromFormat('H:i', $validated['end_time']);
             } catch (\Exception $e) {
-                return response()->json(['errors' => ['end_time' => 'Invalid end time format.']], 422);
+                return response()->json(['status' => false,'message' => 'Invalid end time format.'], 422);
             }
         }
 
         // If start and end time are equal
         if ($start->eq($end)) {
             return response()->json([
-                'errors' => [
-                    'start_time' => 'Start time and end time cannot be the same.',
-                    'end_time' => 'Start time and end time cannot be the same.',
-                ]
+                'status' => false,
+                'message' =>  'Start time and end time cannot be the same.',
             ], 422);
         }
 
@@ -202,17 +205,19 @@ class ShiftController extends Controller
         ]);
 
         return response()->json([
+            'status' => true,
             'message' => 'Shift updated successfully!'
         ], 200);
     }
 
     public function edit($uid)
-    {
+    { 
         $shift = ShiftSetting::with('branch')->where('uid', $uid)->firstOrFail();
         $branchs = Branch::select('id','branch_code', 'branch_name_en', 'branch_name_bn')->where('rec_status', 1)->get();
         $data = ['shift' => $shift, 'branches' => $branchs];
 
         return response()->json([
+            'status' => true,
             'message' => 'Shift found.',
             'data' => $data
         ], 200);
@@ -224,6 +229,7 @@ class ShiftController extends Controller
 
         if (!$shift) {
             return response()->json([
+                    'status' => false,   
                 'message' => 'Shift not found.'
             ], 404);
         }
@@ -231,6 +237,7 @@ class ShiftController extends Controller
         $shift->delete();
 
         return response()->json([
+                'status' => true,
             'message' => 'Shift deleted successfully!'
         ], 200);
     }

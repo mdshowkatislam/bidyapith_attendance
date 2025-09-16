@@ -72,7 +72,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/list', [BaseGroupController::class, 'index'])->name('group_manage.index');
         Route::get('/create', [BaseGroupController::class, 'add'])->name('group_manage.create');
 
-        Route::get('/details/{id}', [BaseGroupController::class, 'previewPdfView'])->name('group_manage.pdf');
+        Route::get('/details/{id}', [BaseGroupController::class, 'previewPdfView'])->name('group_manage.details');
 
         Route::get('/download/pdf/{id}', [BaseGroupController::class, 'downloadGroupPdf'])->name('group_manage.download.pdf');
 

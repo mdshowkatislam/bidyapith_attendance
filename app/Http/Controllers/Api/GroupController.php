@@ -78,7 +78,7 @@ class GroupController extends Controller
             ], 404);
         }
 
-        if ($workDays->isEmpty() ) {
+        if ($workDays->isEmpty()) {
             return response()->json([
                 'message' => 'no_workdays_or_shifts',
             ], 404);
@@ -95,8 +95,10 @@ class GroupController extends Controller
 
     public function details($id)
     {
+        Log::info('details');
+        // exit();
         $group = Group::select(['id', 'group_name', 'description', 'shift_id', 'flexible_in_time', 'flexible_out_time'])
-            ->with(['employees:id,name,profile_id,mobile_number,joining_date,present_address,picture,division_id,department_id,section_id,company_id', 'workDays:id,day_name', 'shift:id,shift_name',
+            ->with(['employees:id,name,profile_id,mobile_number,joining_date,present_address,picture,division_id,department_id,section_id,company_id', 'workDays:id,day_name', 'shift:id,shift_name_en',
                 'employees.division:id,name', 'employees.department:id,name',
                 'employees.section:id,name'])
             ->findOrFail($id);
@@ -116,8 +118,8 @@ class GroupController extends Controller
     }
 
     public function store(Request $request)
-    { 
-     
+    {
+        //  \Log::info('xxxx:', $request->all());
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name',
             'description' => 'nullable|string',
@@ -146,13 +148,11 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            
             return response()->json([
                 'status' => false,
                 'errors' => $validator->errors(),
             ], 422);
         }
- 
 
         try {
             $flexInTime = $request->filled('flexible_in_time') ? (int) $request->flexible_in_time : null;
@@ -241,9 +241,8 @@ class GroupController extends Controller
         ], 200);
     }
 
-    public function update( $id,Request $request)
+    public function update($id, Request $request)
     {
-       
         $group = Group::findOrFail($id);
         // Log::info($group);
 

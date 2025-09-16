@@ -63,6 +63,7 @@ Route::prefix('group_manage')->group(function () {
     Route::get('/edit/{id}', [GroupController::class, 'edit']);
     Route::put('/update/{id}', [GroupController::class, 'update']);
     Route::delete('/delete/{group}', [GroupController::class, 'destroy']);
+    Route::get('/download-pdf/{id}', [GroupController::class, 'downloadPdf']);
     Route::post('/toggle-status/{id}', [GroupController::class, 'toggleStatus']);
 
     Route::get('/shifts-by-branch/{branchCode}', function ($branchCode) {

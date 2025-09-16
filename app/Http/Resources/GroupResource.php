@@ -24,6 +24,15 @@ class GroupResource extends JsonResource
                     'branch_name_en' => $this->shift->branch->branch_name_en
                 ] : null
             ] : null,
+            
+            'branch' => $this->branch ? [
+                'id' => $this->branch->id,
+                'branch_code' => $this->branch->branch_code,
+                'branch_name_en' => $this->branch->branch_name_en,
+                'branch_name_bn' => $this->branch->branch_name_bn,
+                
+            ] : null,
+            
             'work_days' => $this->workDays->map(function ($workDay) {
                 return [
                     'id' => $workDay->id,
@@ -33,7 +42,29 @@ class GroupResource extends JsonResource
             'employees' => $this->employees->map(function ($employee) {
                 return [
                     'id' => $employee->id,
-                    'name' => $employee->name
+                    'profile_id' => $employee->profile_id,
+                    'name' => $employee->name,
+                    'joining_date' => $employee->joining_date,
+                    'mobile_number' => $employee->mobile_number,
+                    'present_address' => $employee->present_address,
+
+                      'division' => $employee->division ? [
+                        'id' => $employee->division->id,
+                        'name' => $employee->division->name
+                    ] : null,
+                    'department' => $employee->department ? [
+                        'id' => $employee->department->id,
+                        'name' => $employee->department->name
+                    ] : null,
+                    'section' => $employee->section ? [
+                        'id' => $employee->section->id,
+                        'name' => $employee->section->name
+                    ] : null,
+                    // 'division_id' => $employee->division_id,
+                    // 'department_id' => $employee->department_id,
+                    // 'section_id' => $employee->section_id,
+                    'company_id' => $employee->company_id,
+                    'picture' => $employee->picture,
                 ];
             }),
             'created_at' => $this->created_at,

@@ -8,159 +8,249 @@ use App\Models\ShiftSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
-// use PDF;
+use Illuminate\Support\Facades\Log;
 
 class BaseGroupController extends Controller
 {
     public function index()
     {
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'accept' => 'application/json',
-        ])
-            ->withOptions(['verify' => false])
-            ->get('http://attendance2.localhost.com/api/group_manage/list');
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'accept' => 'application/json',
+            ])
+                ->withOptions(['verify' => false])
+                ->get('http://attendance2.localhost.com/api/group_manage/list');
 
-        $groups = $response->json()['groups'] ?? [];
-        // dd(  $groups );
+                // dd($response->json());
+            if ($response->successful()) {
+                $data = $response->json();
 
-        return view('admin.frontend.group.index', compact('groups'));
+                if ($data['status'] === true) {
+                    $groups = $data['data'] ?? [];
+                    return view('admin.frontend.group.index', compact('groups'));
+                } else {
+                    return redirect()
+                        ->route('group_manage.index')
+                        ->with('error', $data['message'] ?? 'Failed to fetch groups');
+                }
+            } else {
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('error', 'API request failed: ' . $response->status());
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     public function add()
     {
-        $response = Http::withHeaders([
-            'Content-Type' => 'application/json',
-            'accept' => 'application/json',
-        ])
-            ->withOptions(['verify' => false])
-            ->get('http://attendance2.localhost.com/api/group_manage/add');
-        // dd($response->json());
+        try {
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'accept' => 'application/json',
+            ])
+                ->withOptions(['verify' => false])
+                ->get('http://attendance2.localhost.com/api/group_manage/add');
+            // dd($response->json());
+            if ($response->successful()) {
+                $data = $response->json();
 
-        $message = $response->json()['message'] ?? 'success';
+                if ($data['status'] === true) {
+                    $employees = $data['data']['employees'] ?? [];
+                    $workDays = $data['data']['workDays'] ?? [];
+                    $shifts = $data['data']['shifts'] ?? [];
+                    $branches = $data['data']['branches'] ?? [];
 
-        if ($message === 'no_employees') {
-            return redirect()->route('error-page')->with('error', 'No employees available.');
+                    // Check if required data is available
+                    if (empty($employees) || empty($workDays) || empty($branches)) {
+                        return redirect()
+                            ->route('error-page')
+                            ->with('error', 'Required data missing for creating group');
+                    }
+
+                    return view('admin.frontend.group.create', compact('workDays', 'employees', 'shifts', 'branches'));
+                } else {
+                    return redirect()
+                        ->route('group_manage.index')
+                        ->with('error', $data['message'] ?? 'Failed to fetch group creation data');
+                }
+            } else {
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('error', 'API request failed: ' . $response->status());
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Something went wrong: ' . $e->getMessage());
         }
-
-        if ($message === 'no_workdays_or_shifts') {
-            return redirect()->route('error-page')->with('error', 'Work days or shift settings are missing.');
-        }
-
-        $workDays = $response->json()['workDays'] ?? [];
-        $employees = $response->json()['employees'] ?? [];
-        $shifts = $response->json()['shifts'] ?? [];
-        $branches = $response->json()['branches'] ?? [];
-
-        return view('admin.frontend.group.create', compact('workDays', 'employees', 'shifts', 'branches'));
     }
 
     private function getGroupData($id)
-    {\Log::info('class details');
-        $response = Http::withOptions(['verify' => false])
-            ->get("http://attendance2.localhost.com/api/group_manage/details/{$id}");
+    {
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->get("http://attendance2.localhost.com/api/group_manage/details/{$id}");
+ 
+            // dd($response->json());
+            if ($response->successful()) {
+                $data = $response->json();
+                return $data['status'] === true ? $data['data'] : null;
+            }
 
-        return $response->json()['group'] ?? null;
+            return null;
+        } catch (\Exception $e) {
+            return $this->errorResponse($e, 'Error fetching group data');
+        }
     }
 
     public function previewPdfView($id)
     {
-       \Log::info('base details');
         $group = $this->getGroupData($id);
-        // dd($group);
+                // dd($group); 
+
         if (!$group) {
-            return redirect()->route('group_manage.index')->withErrors('Group not found.');
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Group not found or failed to fetch group details');
         }
+
+
 
         return view('admin.frontend.group.pdf', compact('group'));
     }
 
     public function downloadGroupPdf($id)
     {
-        $group = $this->getGroupData($id);
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->get("http://attendance2.localhost.com/api/group_manage/download-pdf/{$id}");
+            // dd($response->json());
+            if ($response->successful()) {
+  
+                $contentDisposition = $response->header('Content-Disposition');
+                $filename = 'group-details.pdf';
+                if (preg_match('/filename="([^"]+)"/', $contentDisposition, $matches)) {
+                    $filename = $matches[1];
+                }
 
-        if (!$group) {
-            return redirect()->route('group_manage.index')->withErrors('Group not found.');
+                // Return the PDF as a download
+                return response()->streamDownload(function () use ($response) {
+                    echo $response->body();
+                }, $filename, [
+                    'Content-Type' => 'application/pdf',
+                ]);
+            } else {
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('error', 'Failed to generate PDF: ' . $response->status());
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Something went wrong: ' . $e->getMessage());
         }
-
-        $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
-        return $pdf->download('group-details.pdf');
     }
 
     public function store(Request $request)
     {
-        
-         try {
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
 
-        $response = Http::withOptions(['verify' => false])
-            ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
-        $data = $response->json();
-          if (!$data || ($data['status'] ?? false) === false) {
+            $data = $response->json();
+
+            if ($response->successful() && ($data['status'] ?? false) === true) {
+                return response()->json([
+                    'status' => true,
+                    'message' => $data['message'] ?? 'Group created successfully.'
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => $data['message'] ?? 'Group creation failed.',
+                    'errors' => $data['errors'] ?? null
+                ], $response->status() ?? 422);
+            }
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => $data['message'] ?? 'Group Creation failed.',
-                'errors' => $data['errors'] ?? null
-            ], 422);
+                'message' => 'Something went wrong: ' . $e->getMessage()
+            ], 500);
         }
-           return response()->json([
-            'status' => true,
-            'message' => $data['message'] ?? 'Group updated successfully.'
-        ], 200);
-        } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong: ' . $e->getMessage()
-        ], 500);
-    }
-
-       
     }
 
     public function edit($id)
     {
-        $response = Http::withOptions(['verify' => false])
-            ->get("http://attendance2.localhost.com/api/group_manage/edit/{$id}");
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->get("http://attendance2.localhost.com/api/group_manage/edit/{$id}");
 
-        $group = $response->json()['group'] ?? null;
+            if ($response->successful()) {
+                $data = $response->json();
 
-        $employees = $response->json()['employees'] ?? null;
-        $workDays = $response->json()['workDays'] ?? null;
-        $shifts = $response->json()['shifts'] ?? null;
-        $branches = $response->json()['branches'] ?? null;
-        // dd($shifts);
+                if ($data['status'] === true) {
+                    $group = $data['data']['group'] ?? null;
+                    $employees = $data['data']['employees'] ?? [];
+                    $workDays = $data['data']['workDays'] ?? [];
+                    $shifts = $data['data']['shifts'] ?? [];
+                    $branches = $data['data']['branches'] ?? [];
 
-        return view('admin.frontend.group.edit', compact('group', 'shifts', 'employees', 'workDays', 'branches'));
+                    if (!$group) {
+                        return redirect()
+                            ->route('group_manage.index')
+                            ->with('error', 'Group not found');
+                    }
+
+                    return view('admin.frontend.group.edit', compact('group', 'shifts', 'employees', 'workDays', 'branches'));
+                } else {
+                    return redirect()
+                        ->route('group_manage.index')
+                        ->with('error', $data['message'] ?? 'Failed to fetch group data');
+                }
+            } else {
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('error', 'API request failed: ' . $response->status());
+            }
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
- public function update($id, Request $request)
-{
-    try {
-        $response = Http::withOptions(['verify' => false])
-            ->post("http://attendance2.localhost.com/api/group_manage/update/{$id}", $request->all());
+    public function update($id, Request $request)
+    {
+        try {
+            $response = Http::withOptions(['verify' => false])
+                ->post("http://attendance2.localhost.com/api/group_manage/update/{$id}", $request->all());
 
-        $data = $response->json();
+            $data = $response->json();
 
-        if (!$data || ($data['status'] ?? false) === false) {
+            if ($response->successful() && ($data['status'] ?? false) === true) {
+                return response()->json([
+                    'status' => true,
+                    'message' => $data['message'] ?? 'Group updated successfully.'
+                ], 200);
+            } else {
+                return response()->json([
+                    'status' => false,
+                    'message' => $data['message'] ?? 'Group update failed.',
+                    'errors' => $data['errors'] ?? null
+                ], $response->status() ?? 422);
+            }
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => $data['message'] ?? 'Group update failed.',
-                'errors' => $data['errors'] ?? null
-            ], 422);
+                'message' => 'Something went wrong: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'status' => true,
-            'message' => $data['message'] ?? 'Group updated successfully.'
-        ], 200);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'status' => false,
-            'message' => 'Something went wrong: ' . $e->getMessage()
-        ], 500);
     }
-}
-
 
     public function destroy($id)
     {
@@ -168,14 +258,22 @@ class BaseGroupController extends Controller
             $response = Http::withOptions(['verify' => false])
                 ->delete("http://attendance2.localhost.com/api/group_manage/delete/{$id}");
 
-            if ($response->successful()) {
-                return redirect()->route('group_manage.index')->with('success', $response['message']);
+            $data = $response->json();
+
+            if ($response->successful() && ($data['status'] ?? false) === true) {
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('success', $data['message'] ?? 'Group deleted successfully');
             } else {
-                return redirect()->route('group_manage.index')->with('error', $response['error'] ?? 'Failed to delete.');
+                return redirect()
+                    ->route('group_manage.index')
+                    ->with('error', $data['message'] ?? 'Failed to delete group');
             }
         } catch (\Exception $e) {
-            \Log::error('API call failed: ' . $e->getMessage());
-            return redirect()->route('group_manage.index')->with('error', 'Something went wrong while deleting.');
+            Log::error('API call failed: ' . $e->getMessage());
+            return redirect()
+                ->route('group_manage.index')
+                ->with('error', 'Something went wrong while deleting: ' . $e->getMessage());
         }
     }
 }

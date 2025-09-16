@@ -33,17 +33,17 @@ class Group extends Model
     }
     
     // Add branch relationship through shift
-    public function branch()
-    {
-        return $this->hasOneThrough(
-            Branch::class,
-            ShiftSetting::class,
-            'id', // Foreign key on ShiftSetting table
-            'branch_code', // Foreign key on Branch table
-            'shift_id', // Local key on Group table
-            'branch_code' // Local key on ShiftSetting table
-        );
-    }
+  public function branch()
+{
+    return $this->hasOneThrough(
+        Branch::class,          // Final model we want to access
+        ShiftSetting::class,    // Intermediate model
+        'id',                   // Foreign key on the ShiftSetting table (references Group's shift_id)
+        'branch_code',          // Foreign key on the Branch table (references ShiftSetting's branch_code)
+        'shift_id',             // Local key on the Group table
+        'branch_code'           // Local key on the ShiftSetting table
+    );
+}
 
     public function flexibleTime()
     {

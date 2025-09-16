@@ -10,7 +10,9 @@ use App\Models\Group;
 use App\Models\ShiftSetting;
 use App\Models\WorkDay;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Log;
+use Barryvdh\DomPDF\Facade\PDF;
+use Illuminate\Container\Attributes\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -37,26 +39,20 @@ class GroupController extends Controller
     //         'groups' => $groups,
     //     ], 200);
     // }
-
     public function index(Request $request)
     {
-        $groups = Group::with([
-            'shift.branch',  // Eager load branch through shift
-            'workDays',
-            'employees'
-        ])
-            ->get();
+        // $groups = Group::with([
+        //     'shift.branch',  // Eager load branch through shift
+        //     'workDays',
+        //     'employees',
+        // ])->get();
+
+        $groups = Group::all();
 
         if ($groups->isEmpty()) {
-            return response()->json([
-                'message' => 'No groups found.',
-            ], 404);
+            return $this->unsuccessResponse('No groups found.', 404);
         }
-
-        return response()->json([
-            'message' => 'Groups fetched successfully.',
-            'groups' => GroupResource::collection($groups),
-        ], 200);
+        return $this->successResponse('Groups fetched successfully.', GroupResource::collection($groups), 200);
     }
 
     public function add()
@@ -70,56 +66,37 @@ class GroupController extends Controller
         $workDays = WorkDay::select('id', 'day_name')->get();
         $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id', 'name')->get();
 
-        // \Log::info($workDays);
-
         if ($employees->isEmpty()) {
-            return response()->json([
-                'message' => 'no_employees',
-            ], 404);
+            return $this->unsuccessResponse('No employees available to assign.', 404);
         }
 
         if ($workDays->isEmpty()) {
-            return response()->json([
-                'message' => 'no_workdays_or_shifts',
-            ], 404);
+            return $this->unsuccessResponse('No work days available to assign.', 404);
         }
 
-        return response()->json([
+        return $this->successResponse('Data fetched successfully.', [
             'workDays' => $workDays,
             'employees' => $employees,
             'shifts' => $shifts,
-            'message' => 'success',
             'branches' => $branches,
         ]);
     }
 
     public function details($id)
     {
-        Log::info('details');
         // exit();
-        $group = Group::select(['id', 'group_name', 'description', 'shift_id', 'flexible_in_time', 'flexible_out_time'])
-            ->with(['employees:id,name,profile_id,mobile_number,joining_date,present_address,picture,division_id,department_id,section_id,company_id', 'workDays:id,day_name', 'shift:id,shift_name_en',
-                'employees.division:id,name', 'employees.department:id,name',
-                'employees.section:id,name'])
-            ->findOrFail($id);
-        foreach ($group->employees as $item) {
-            $item->setRelation('pivot', false);
-            $item->makeHidden(['division_id', 'department_id', 'section_id']);
-        };
-        foreach ($group->workDays as $item) {
-            $item->setRelation('pivot', false);
-        };
-        $group->makeHidden(['shift_id']);
 
-        return response()->json([
-            'message' => 'Group found.',
-            'group' => $group,
-        ], 200);
+        $group = Group::where('status', 1)->find($id);
+
+        if (!$group) {
+            return $this->unsuccessResponse('Group not found.', 404);
+        }
+
+        return $this->successResponse('Group found.', new GroupResource($group), 200);
     }
 
     public function store(Request $request)
     {
-        //  \Log::info('xxxx:', $request->all());
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name',
             'description' => 'nullable|string',
@@ -148,10 +125,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->errorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
         }
 
         try {
@@ -177,15 +151,9 @@ class GroupController extends Controller
                 $group->employees()->sync($request->employee_ids);
             }
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Group created successfully.',
-            ], 201);
+            return $this->successResponse('Group created successfully.', $group, 201);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Error creating group: ' . $e->getMessage()
-            ], 500);
+            return $this->errorResponse(new \Exception('Error creating group: ' . $e->getMessage()), 'Error creating group', 500);
         }
     }
 
@@ -230,22 +198,18 @@ class GroupController extends Controller
             })
             ->select(['id', 'profile_id', 'name'])
             ->get();
-
-        return response()->json([
-            'message' => 'Group found.',
+        return $this->successResponse('Data fetched successfully.', [
             'group' => $group,
             'branches' => $branches,
             'shifts' => $shifts,
             'workDays' => $workDays,
-            'employees' => $employees
-        ], 200);
+            'employees' => $employees,
+        ]);
     }
 
     public function update($id, Request $request)
     {
         $group = Group::findOrFail($id);
-        // Log::info($group);
-
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
             'description' => 'nullable|string',
@@ -274,10 +238,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->errorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
         }
 
         try {
@@ -298,15 +259,9 @@ class GroupController extends Controller
             $group->workDays()->sync($request->work_day_ids ?? []);
             $group->employees()->sync($request->employee_ids ?? []);
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Group updated successfully.',
-            ], 200);
+            return $this->successResponse('Group updated successfully.', null, 200);
         } catch (\Exception $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Error updating group: ' . $e->getMessage()
-            ], 500);
+            return $this->errorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
         }
     }
 
@@ -318,13 +273,12 @@ class GroupController extends Controller
             $deleted = $group->delete();
 
             if (!$deleted) {
-                return response()->json(['error' => 'Group could not be deleted.'], 500);
+                return $this->errorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
             } else {
-                return response()->json(['message' => 'Group deleted successfully.']);
+                return $this->successResponse('Group deleted successfully.', null, 200);
             }
         } catch (\Exception $e) {
-            // \Log::error('Group deletion error: ' . $e->getMessage());
-            return response()->json(['error' => 'Something went wrong.'], 500);
+            return $this->errorResponse(new \Exception('Exception Something went wrong.'), 'Group deletion error', 500);
         }
     }
 
@@ -340,4 +294,52 @@ class GroupController extends Controller
             'badge_class' => $group->status === 1 ? 'bg-success' : 'bg-secondary'
         ]);
     }
+
+    public function downloadPdf($id)
+    {
+        try {
+            $data = Group::where('status', 1)->find($id);
+
+            if (!$data) {
+                return $this->errorResponse(new \Exception('Group not found'), 'Group not found', 404);
+            }
+
+            $group = new GroupResource($data);
+            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
+
+            // Return the PDF as a download response
+            return $pdf->download('group-details-' . $id . '.pdf');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e, 'Failed to generate PDF', 500);
+        }
+    }
+
+    // public function downloadPdf($id)
+    // {
+    //     try {
+    //         $data = Group::where('status', 1)->find($id);
+
+    //       $group = new GroupResource($data);
+    //             //   \Log::info('Group data for PDF:', $group->toArray(request()));
+    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
+
+    //         // return $pdf->download('group-details-' . $id . '.pdf');
+    //         // return $pdf->stream('group-details-' . $id . '.pdf');
+    //         // return response()->streamDownload(function() use ($pdf) {
+    //         //     echo $pdf->output();
+    //         // }, 'group-details-' . $id . '.pdf');
+    //         // return response()->json([
+    //         //     'message' => 'PDF generated successfully.',
+    //         //     'pdf_content' => base64_encode($pdf->output()),
+    //         //     'file_name' => 'group-details-' . $id . '.pdf'
+    //         // ]);
+    //         return response()->json([
+    //             'group' => $pdf->output(),
+    //             'file_name' => 'group-details-' . $id . '.pdf'
+    //             ]);
+
+    //     } catch (\Exception $e) {
+    //         return $this->errorResponse($e, 'Failed to generate PDF', 500);
+    //     }
+    // }
 }

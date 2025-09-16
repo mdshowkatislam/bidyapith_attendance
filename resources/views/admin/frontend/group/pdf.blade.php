@@ -109,7 +109,8 @@
         <div class="flex-row-between">
             <div class="section details">
                 <p><strong>Description:</strong> {{ $group['description'] }}</p>
-                <p><strong>Shift:</strong> {{ $group['shift']['shift_name'] ?? 'N/A' }}</p>
+                <p><strong>Branch:</strong> {{ $group['branch']['branch_name_en'] ?? 'N/A' }} ({{ $group['branch']['branch_code'] ?? 'N/A' }})</p>
+                <p><strong>Shift:</strong> {{ $group['shift']['shift_name_en'] ?? 'N/A' }}</p>
                 <p><strong>Working Days:</strong>
                     {{ collect($group['work_days'])->pluck('day_name')->implode(', ') }}
                 </p>

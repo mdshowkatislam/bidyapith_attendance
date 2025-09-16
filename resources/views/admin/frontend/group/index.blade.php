@@ -91,6 +91,7 @@
                 <th>ID</th>
                 <th>Group Name</th>
                 <th>Description</th>
+                <th>Branch</th>
                 <th>Shift</th>
                 <th>Flex In Time</th>
                 <th>Flex Out Time</th>
@@ -107,6 +108,7 @@
                     <td>{{ $item['id'] }}</td>
                     <td>{{ $item['group_name'] }}</td>
                     <td>{{ $item['description'] }}</td>
+                    <td>{{ $item['branch']['branch_name_en'] }}</td>
                     <td>{{ $item['shift']['shift_name_en'] }}</td>
                     <td>{{ $item['flexible_in_time'] }} min</td>
                     <td>{{ $item['flexible_out_time'] }} min</td>

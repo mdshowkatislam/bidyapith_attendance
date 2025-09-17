@@ -68,7 +68,7 @@
                                             required>
                                         <option value="">-- Choose Shift --</option>
                                         @foreach ($shifts as $item)
-                                            <option value="{{ $item['id'] }}">{{ $item['shift_name'] }}</option>
+                                            <option value="{{ $item['id'] }}">{{ $item['shift_name_en'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>

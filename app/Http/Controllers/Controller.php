@@ -6,7 +6,7 @@ use Illuminate\Http\Response;
 
 abstract class Controller
 {
-    protected function successResponse($message = 'Success', $data = null, $statusCode = Response::HTTP_OK)
+    protected function apisuccessResponse($message = 'Success', $data = null, $statusCode = Response::HTTP_OK)
     {
         $response = [
             'status' => true,
@@ -20,7 +20,7 @@ abstract class Controller
         return response()->json($response, $statusCode);
     }
 
-    protected function unsuccessResponse($message = 'Failed', $statusCode = Response::HTTP_BAD_REQUEST)
+    protected function apiunsuccessResponse($message = 'Failed', $statusCode = Response::HTTP_BAD_REQUEST)
     {
         return response()->json([
             'status' => false,
@@ -28,7 +28,7 @@ abstract class Controller
         ], $statusCode);
     }
 
-    protected function errorResponse(\Throwable $e, $message = 'Validation error', $statusCode = Response::HTTP_UNPROCESSABLE_ENTITY)
+    protected function apierrorResponse(\Throwable $e, $message = 'Validation error', $statusCode = Response::HTTP_UNPROCESSABLE_ENTITY)
     {
         return response()->json([
             'status' => false,

@@ -20,6 +20,7 @@ class ShiftController extends Controller
         if (count($shifts) > 0) {
           
             return response()->json([
+                'status' => true,   
                 'message' => 'Shifts fetched successfully.',
                 'shifts' => $shifts,
             ], 200);
@@ -76,7 +77,7 @@ class ShiftController extends Controller
         
             return response()->json([
                 'status' => false,
-                'message' => 'Validation failed',
+                'message' => 'Validation failed: ' . $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }

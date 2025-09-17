@@ -29,7 +29,7 @@ class BranchController extends Controller
     public function index()
     {
         $branches = Branch::where('rec_status', 1)->get();
-        //   \Log::info( $branches);
+          Log::info( $branches);
         if (count($branches) > 0) {
             return response()->json([
                     'status' => true,
@@ -53,8 +53,8 @@ class BranchController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'status' => 'validation_error',
-                'message' => 'Validation failed',
+                'status' => false,
+                'message' => 'Validation failed: ' . $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -68,12 +68,12 @@ class BranchController extends Controller
                 Response::HTTP_CREATED
             );
         } catch (\Exception $e) {
-            Log::error('Branch creation failed: ' . $e->getMessage());
+  
 
             return $this->errorResponse(
                 [
                     'status' => false,
-                    'message' => 'Failed to create branch',
+                    'message' => 'Failed to create branch: ' . $e->getMessage(),
                 ],
                 Response::HTTP_INTERNAL_SERVER_ERROR
             );
@@ -114,7 +114,7 @@ class BranchController extends Controller
         if ($validator->fails()) {
             return response()->json([
                 'status' => 'false',
-                'message' => 'Validation failed',
+                'message' => 'Validation failed: ' . $validator->errors()->first(),
                 'errors' => $validator->errors()
             ], 422);
         }
@@ -136,11 +136,10 @@ class BranchController extends Controller
                 'data' => $branch
             ], 200);
         } catch (\Exception $e) {
-            Log::error('Branch update failed: ' . $e->getMessage());
 
             return response()->json([
                 'status' => false,
-                'message' => 'Failed to update branch'
+                'message' => 'Failed to update branch: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -165,7 +164,7 @@ class BranchController extends Controller
     } catch (\Exception $e) {
         return response()->json([
             'status'  => false,
-            'message' => 'Sorry, something went wrong!',
+            'message' => 'Sorry, something went wrong! ' . $e->getMessage(),
             'error'   => $e->getMessage() 
         ], Response::HTTP_INTERNAL_SERVER_ERROR);
     }

@@ -50,9 +50,9 @@ class GroupController extends Controller
         $groups = Group::all();
 
         if ($groups->isEmpty()) {
-            return $this->unsuccessResponse('No groups found.', 404);
+            return $this->apisuccessResponse('No groups found.', 404);
         }
-        return $this->successResponse('Groups fetched successfully.', GroupResource::collection($groups), 200);
+        return $this->apisuccessResponse('Groups fetched successfully.', GroupResource::collection($groups), 200);
     }
 
     public function add()
@@ -67,14 +67,14 @@ class GroupController extends Controller
         $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id', 'name')->get();
 
         if ($employees->isEmpty()) {
-            return $this->unsuccessResponse('No employees available to assign.', 404);
+            return $this->apisuccessResponse('No employees available to assign.', 404);
         }
 
         if ($workDays->isEmpty()) {
-            return $this->unsuccessResponse('No work days available to assign.', 404);
+            return $this->apisuccessResponse('No work days available to assign.', 404);
         }
 
-        return $this->successResponse('Data fetched successfully.', [
+        return $this->apisuccessResponse('Data fetched successfully.', [
             'workDays' => $workDays,
             'employees' => $employees,
             'shifts' => $shifts,
@@ -89,10 +89,10 @@ class GroupController extends Controller
         $group = Group::where('status', 1)->find($id);
 
         if (!$group) {
-            return $this->unsuccessResponse('Group not found.', 404);
+            return $this->apisuccessResponse('Group not found.', 404);
         }
 
-        return $this->successResponse('Group found.', new GroupResource($group), 200);
+        return $this->apisuccessResponse('Group found.', new GroupResource($group), 200);
     }
 
     public function store(Request $request)
@@ -125,7 +125,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->errorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
+            return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
         }
 
         try {
@@ -151,9 +151,9 @@ class GroupController extends Controller
                 $group->employees()->sync($request->employee_ids);
             }
 
-            return $this->successResponse('Group created successfully.', $group, 201);
+            return $this->apisuccessResponse('Group created successfully.', $group, 201);
         } catch (\Exception $e) {
-            return $this->errorResponse(new \Exception('Error creating group: ' . $e->getMessage()), 'Error creating group', 500);
+            return $this->apierrorResponse(new \Exception('Error creating group: ' . $e->getMessage()), 'Error creating group', 500);
         }
     }
 
@@ -198,7 +198,7 @@ class GroupController extends Controller
             })
             ->select(['id', 'profile_id', 'name'])
             ->get();
-        return $this->successResponse('Data fetched successfully.', [
+        return $this->apisuccessResponse('Data fetched successfully.', [
             'group' => $group,
             'branches' => $branches,
             'shifts' => $shifts,
@@ -238,7 +238,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->errorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
+            return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
         }
 
         try {
@@ -259,9 +259,9 @@ class GroupController extends Controller
             $group->workDays()->sync($request->work_day_ids ?? []);
             $group->employees()->sync($request->employee_ids ?? []);
 
-            return $this->successResponse('Group updated successfully.', null, 200);
+            return $this->apisuccessResponse('Group updated successfully.', null, 200);
         } catch (\Exception $e) {
-            return $this->errorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
+            return $this->apierrorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
         }
     }
 
@@ -273,12 +273,12 @@ class GroupController extends Controller
             $deleted = $group->delete();
 
             if (!$deleted) {
-                return $this->errorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
+                return $this->apierrorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
             } else {
-                return $this->successResponse('Group deleted successfully.', null, 200);
+                return $this->apisuccessResponse('Group deleted successfully.', null, 200);
             }
         } catch (\Exception $e) {
-            return $this->errorResponse(new \Exception('Exception Something went wrong.'), 'Group deletion error', 500);
+            return $this->apierrorResponse(new \Exception('Exception Something went wrong.'), 'Group deletion error', 500);
         }
     }
 
@@ -301,7 +301,7 @@ class GroupController extends Controller
             $data = Group::where('status', 1)->find($id);
 
             if (!$data) {
-                return $this->errorResponse(new \Exception('Group not found'), 'Group not found', 404);
+                return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
             }
 
             $group = new GroupResource($data);
@@ -310,7 +310,7 @@ class GroupController extends Controller
             // Return the PDF as a download response
             return $pdf->download('group-details-' . $id . '.pdf');
         } catch (\Exception $e) {
-            return $this->errorResponse($e, 'Failed to generate PDF', 500);
+            return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
         }
     }
 
@@ -339,7 +339,7 @@ class GroupController extends Controller
     //             ]);
 
     //     } catch (\Exception $e) {
-    //         return $this->errorResponse($e, 'Failed to generate PDF', 500);
+    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
     //     }
     // }
 }

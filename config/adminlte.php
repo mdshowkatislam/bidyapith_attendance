@@ -339,12 +339,12 @@ return [
                             'url' => 'division/list',
                         ],
                         [
-                            'text' => 'Department',
+                            'text' => 'District',
                             'icon_color' => 'yellow',
                             'route' => 'department.list',
                         ],
                         [
-                            'text' => 'Section',
+                            'text' => 'Upazila',
                             'icon_color' => 'green',
                             'route' => 'section.list',
                         ],

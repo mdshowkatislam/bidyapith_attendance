@@ -6,7 +6,7 @@ use Illuminate\Http\Response;
 
 trait ApiResponse
 {
-    public function successResponseWithData($data, $message, $code = Response::HTTP_CREATE)
+    public function successResponseWithData($data, $message, $code = Response::HTTP_CREATED)
     {
         return response()->json([
             'status' => true,

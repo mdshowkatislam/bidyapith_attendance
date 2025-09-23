@@ -10,9 +10,9 @@ use App\Models\Group;
 use App\Models\ShiftSetting;
 use App\Models\WorkDay;
 use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\PDF;
-use Illuminate\Container\Attributes\Log;
+
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 
@@ -46,6 +46,7 @@ class GroupController extends Controller
         //     'workDays',
         //     'employees',
         // ])->get();
+ 
 
         $groups = Group::all();
 
@@ -87,6 +88,8 @@ class GroupController extends Controller
         // exit();
 
         $group = Group::where('status', 1)->find($id);
+       $result =new GroupResource($group);
+     
 
         if (!$group) {
             return $this->apisuccessResponse('Group not found.', 404);
@@ -294,25 +297,59 @@ class GroupController extends Controller
             'badge_class' => $group->status === 1 ? 'bg-success' : 'bg-secondary'
         ]);
     }
+  //For defalt Paper Size view
+// public function downloadPdf($id)
+// {
+//     try {
+//         $data = Group::where('status', 1)->find($id);
+       
+//         if (!$data) {
+//             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
+//         }
 
-    public function downloadPdf($id)
-    {
-        try {
-            $data = Group::where('status', 1)->find($id);
+//         $group = new GroupResource($data);
 
-            if (!$data) {
-                return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-            }
+//         // Configure PDF settings
+//         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+//                   ->setPaper('a4', 'landscape') // or 'portrait' depending on your content
+//                   ->setOption('dpi', 150)
+//                   ->setOption('margin-top', 10)
+//                   ->setOption('margin-right', 10)
+//                   ->setOption('margin-bottom', 10)
+//                   ->setOption('margin-left', 10);
 
-            $group = new GroupResource($data);
-            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
+//         // Return the PDF as a download response
+//         return $pdf->download('group-details-' . $id . '.pdf');
+//     } catch (\Exception $e) {
+//         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+//     }
+// }
 
-            // Return the PDF as a download response
-            return $pdf->download('group-details-' . $id . '.pdf');
-        } catch (\Exception $e) {
-            return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+
+//For Custom Paper Size with Specific Dimensions
+public function downloadPdf($id)
+{
+    try {
+        $data = Group::where('status', 1)->find($id);
+       
+        if (!$data) {
+            return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
         }
+
+        $group = new GroupResource($data);
+
+        // Custom paper size (width, height) in millimeters
+        $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+                  ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
+                  ->setOption('dpi', 96)
+                  ->setOption('defaultFont', 'Arial')
+                  ->setOption('isHtml5ParserEnabled', true);
+
+        return $pdf->download('group-details-' . $id . '.pdf');
+    } catch (\Exception $e) {
+        return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
     }
+}
 
     // public function downloadPdf($id)
     // {

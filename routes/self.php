@@ -7,13 +7,13 @@ use App\Http\Controllers\Admin\Frontend\BaseShiftController;
 use App\Http\Controllers\Admin\Frontend\BaseSpecialWorkingdayController;
 use App\Http\Controllers\Admin\Frontend\BaseWorkdayController;
 
-
 // use App\Http\Controllers\Admin\Frontend\WebAccessDBController;
 // use App\Http\Controllers\Admin\Frontend\WebDatabaseManageController;
 use App\Http\Controllers\Admin\Frontend\BaseDateShiftAttendanceController;
 use App\Http\Controllers\Admin\EmployeeProfileController;
 // use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // ✅ BRANCH MANAGEMENT

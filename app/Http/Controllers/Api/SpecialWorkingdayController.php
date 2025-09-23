@@ -36,7 +36,7 @@ class SpecialWorkingdayController extends Controller
         }
         $data = $validator->validated();
         $workday = SpecialWorkingday::create([
-            'date' => $data['date'],
+            'date' => $data['date'],`
             'day_type' => $data['day_type'],
             'description' => $data['description'] ?? null,
         ]);

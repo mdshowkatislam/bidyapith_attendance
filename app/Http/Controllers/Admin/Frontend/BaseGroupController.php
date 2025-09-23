@@ -15,10 +15,12 @@ class BaseGroupController extends Controller
     public function index()
     {
         try {
+           
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'accept' => 'application/json',
             ])
+            
                 ->withOptions(['verify' => false])
                 ->get('http://attendance2.localhost.com/api/group_manage/list');
 
@@ -111,7 +113,7 @@ class BaseGroupController extends Controller
     public function previewPdfView($id)
     {
         $group = $this->getGroupData($id);
-                // dd($group); 
+                // dd($group['employees'] ); 
 
         if (!$group) {
             return redirect()
@@ -131,13 +133,14 @@ class BaseGroupController extends Controller
                 ->get("http://attendance2.localhost.com/api/group_manage/download-pdf/{$id}");
             // dd($response->json());
             if ($response->successful()) {
-  
                 $contentDisposition = $response->header('Content-Disposition');
+                // dd($contentDisposition);    
                 $filename = 'group-details.pdf';
                 if (preg_match('/filename="([^"]+)"/', $contentDisposition, $matches)) {
                     $filename = $matches[1];
+                    dd($filename);
                 }
-
+ 
                 // Return the PDF as a download
                 return response()->streamDownload(function () use ($response) {
                     echo $response->body();
@@ -145,6 +148,7 @@ class BaseGroupController extends Controller
                     'Content-Type' => 'application/pdf',
                 ]);
             } else {
+                          
                 return redirect()
                     ->route('group_manage.index')
                     ->with('error', 'Failed to generate PDF: ' . $response->status());

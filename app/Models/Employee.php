@@ -4,8 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Models\CheckInOut;
-use App\Models\Section;
-use App\Models\Department;
+use App\Models\Upazila;
+use App\Models\District;
 use App\Models\Division;
 
 class Employee extends Model
@@ -25,7 +25,8 @@ class Employee extends Model
         'present_address',
         'permanent_address',
         'division_id',
-        'department_id',
+        'district_id',
+        'upazila_id',
         'section_id',
         'badgenumber',
         'company_id',
@@ -39,16 +40,16 @@ class Employee extends Model
         return $this->hasMany(CheckInOut::class, 'user_id', 'profile_id');
     }
 
-    // Relationship: Employee belongs to a Section
-    public function section()
+    // Relationship: Employee belongs to a Upazila
+    public function upazila()
     {
-        return $this->belongsTo(Section::class);
+        return $this->belongsTo(Upazila::class);
     }
 
     // Relationship: Employee belongs to a Department
-    public function department()
+    public function district()
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(District::class);
     }
 
     // Relationship: Employee belongs to a Division

@@ -15,14 +15,12 @@ return new class extends Migration
             $table->id();
             $table->bigInteger('uid')->unique();
             $table->bigInteger('district_id')->nullable();
-            $table->bigInteger('upazila_id')->nullable();
             $table->string('upazila_name_en')->nullable();
             $table->string('upazila_name_bn');
             $table->bigInteger('created_by')->nullable();
             $table->bigInteger('updated_by')->nullable();
             $table->bigInteger('deleted_by')->nullable();
             $table->timestamps();
-            $table->softDeletes();
         });
     }
 

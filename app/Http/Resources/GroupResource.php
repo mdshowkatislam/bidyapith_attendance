@@ -50,19 +50,19 @@ class GroupResource extends JsonResource
 
                       'division' => $employee->division ? [
                         'id' => $employee->division->id,
-                        'name' => $employee->division->name
+                        'name' => $employee->division->division_name_en
                     ] : null,
-                    'department' => $employee->department ? [
-                        'id' => $employee->department->id,
-                        'name' => $employee->department->name
+                    'district' => $employee->district ? [
+                        'id' => $employee->district->id,
+                        'name' => $employee->district->district_name_en
                     ] : null,
-                    'section' => $employee->section ? [
-                        'id' => $employee->section->id,
-                        'name' => $employee->section->name
+                    'upazila' => $employee->upazila ? [
+                        'id' => $employee->upazila->id,
+                        'name' => $employee->upazila->upazila_name_en
                     ] : null,
                     // 'division_id' => $employee->division_id,
-                    // 'department_id' => $employee->department_id,
-                    // 'section_id' => $employee->section_id,
+                    // 'district_id' => $employee->district_id,
+                    // 'upazila_id' => $employee->upazila_id,
                     'company_id' => $employee->company_id,
                     'picture' => $employee->picture,
                 ];

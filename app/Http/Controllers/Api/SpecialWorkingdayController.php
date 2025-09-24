@@ -13,11 +13,14 @@ class SpecialWorkingdayController extends Controller
 {
     public function index()
     { 
-        $workdays = SpecialWorkingday::with('groups')->latest()->paginate(10);
+        $specialWorkdays = SpecialWorkingday::with('groups')->latest()->get();
+        $total = $specialWorkdays->count();
 
         return response()->json([
+            'status' => true,
             'message' => 'Special workdays fetched successfully.',
-            'data' => $workdays
+            'workdays' => $specialWorkdays,
+            'total' => $total
         ]);
     }
 
@@ -29,21 +32,24 @@ class SpecialWorkingdayController extends Controller
             'description' => 'nullable|string',
             'group_ids' => 'required|array',
             'group_ids.*' => 'exists:groups,id',
+            'status' => 'nullable|integer|in:0,1',  
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['status'=>false,'message' => $validator->errors()], 422);
         }
         $data = $validator->validated();
         $workday = SpecialWorkingday::create([
-            'date' => $data['date'],`
+            'date' => $data['date'],
             'day_type' => $data['day_type'],
             'description' => $data['description'] ?? null,
+            'status' => $data['status'] ?? null,
         ]);
 
         $workday->groups()->attach($data['group_ids']);
 
         return response()->json([
+            'status'=>true,
             'message' => 'Special working day created successfully.',
             'data' => $workday->load('groups'),
         ]);
@@ -52,6 +58,7 @@ class SpecialWorkingdayController extends Controller
     public function show(SpecialWorkingday $specialWorkingday)
     {
         return response()->json([
+            'status'=>true,
             'data' => $specialWorkingday->load('groups')
         ]);
     }
@@ -90,10 +97,11 @@ class SpecialWorkingdayController extends Controller
             'description' => 'nullable|string',
             'group_ids' => 'required|array',
             'group_ids.*' => 'exists:groups,id',
+            'status' => 'nullable|integer|in:0,1',  
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
+            return response()->json(['status'=>false,'message' => $validator->errors()], 422);
         }
 
         $data = $validator->validated();
@@ -102,12 +110,14 @@ class SpecialWorkingdayController extends Controller
             'date' => $data['date'],
             'day_type' => $data['day_type'],
             'description' => $data['description'] ?? null,
+            'status' => $data['status'] ?? null,
         ]);
 
         // Replace old group associations with new ones
         $specialWorkingday->groups()->sync($data['group_ids']);
 
         return response()->json([
+            'status'=>true,
             'message' => 'Special working day updated successfully.',
             'data' => $specialWorkingday->load('groups'),
         ]);
@@ -120,6 +130,7 @@ class SpecialWorkingdayController extends Controller
         $specialWorkingday->delete();
 
         return response()->json([
+            'status'=>true,
             'message' => 'Special workday deleted successfully.'
         ]);
     }

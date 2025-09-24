@@ -38,6 +38,7 @@ class WorkdayController extends Controller
         ]);
 
         return response()->json([
+            'status' => true,   
             'message' => 'Work day added successfully.',
             'data' => $workDay,
         ], 201);
@@ -45,7 +46,7 @@ class WorkdayController extends Controller
 
     // Get a single work day for editing
     public function edit($id)
-    { \Log::info('edit hitte');
+    { 
         $workDay = WorkDay::findOrFail($id);
 
         return response()->json($workDay);
@@ -66,6 +67,7 @@ class WorkdayController extends Controller
         ]);
 
         return response()->json([
+            'status' => true,
             'message' => 'Work day updated successfully.',
             'data' => $workDay,
         ]);
@@ -78,6 +80,7 @@ class WorkdayController extends Controller
         $workDay->delete();
 
         return response()->json([
+            'status'=>true,
             'message' => 'Work day deleted successfully.',
         ]);
     }

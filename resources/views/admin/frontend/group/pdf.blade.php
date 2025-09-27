@@ -117,7 +117,11 @@
                 <p><strong>Branch:</strong> {{ $group['branch']['branch_name_en'] ?? 'N/A' }} ({{ $group['branch']['branch_code'] ?? 'N/A' }})</p>
                 <p><strong>Shift:</strong> {{ $group['shift']['shift_name_en'] ?? 'N/A' }}</p>
                 <p><strong>Working Days:</strong>
-                    {{ collect($group['work_days'])->pluck('day_name')->implode(', ') }}
+                    {{-- {{ collect($group['work_days'])->pluck('day_name')->implode(', ') }} --}}
+                   
+                    {{ collect($group['work_days'] ?? [])->pluck('day_name')->implode(', ') }}
+
+                    {{-- {{ implode(', ', array_column($group['work_days'] ?? [], 'day_name')) }} --}}
                 </p>
             </div>
             <div class="section details"
@@ -153,9 +157,9 @@
                         <td>{{ $employee['mobile_number'] }}</td>
                         <td>{{ $employee['joining_date'] }}</td>
                         <td>{{ $employee['present_address'] }}</td>
-                        <td>{{ $employee['division']['name'] ?? 'N/A' }}</td>
-                        <td>{{ $employee['district']['name'] ?? 'N/A' }}</td>
-                        <td>{{ $employee['upazila']['name'] ?? 'N/A' }}</td>
+                         <td>{{ $employee['division']['division_name_en'] ?? 'N/A' }}</td>
+                        <td>{{ $employee['district']['district_name_en'] ?? 'N/A' }}</td>
+                        <td>{{ $employee['upazila']['upazila_name_en'] ?? 'N/A' }}</td>
                         <td>{{ $employee['company_id'] }}</td>
                         <td>
                             @if (!empty($employee['picture']))

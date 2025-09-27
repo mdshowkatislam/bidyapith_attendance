@@ -7,7 +7,7 @@
 
 @section('admin_content')
 <div class="card">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-end">
         <a href="{{ route('division.add', 0) }}" class="btn btn-primary">Add Division</a>
     </div>
     <div class="card-body">
@@ -27,7 +27,7 @@
                 @foreach($divisions as $index => $division)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $division->name }}</td>
+                    <td>{{ $division->division_name_en }}</td>
                     <td>{{ $division->created_at->format('d M, Y') }}</td>
                     <td>
                         <a href="{{ route('division.edit', $division->id) }}" class="btn btn-sm btn-info">Edit</a>

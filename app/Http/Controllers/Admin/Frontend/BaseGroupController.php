@@ -131,14 +131,14 @@ class BaseGroupController extends Controller
         try {
             $response = Http::withOptions(['verify' => false])
                 ->get("http://attendance2.localhost.com/api/group_manage/download-pdf/{$id}");
-            // dd($response->json());
+            // dd($response->body());
             if ($response->successful()) {
                 $contentDisposition = $response->header('Content-Disposition');
                 // dd($contentDisposition);    
                 $filename = 'group-details.pdf';
                 if (preg_match('/filename="([^"]+)"/', $contentDisposition, $matches)) {
                     $filename = $matches[1];
-                    dd($filename);
+                  
                 }
  
                 // Return the PDF as a download

@@ -1,14 +1,14 @@
 @extends('admin.master')
 
 @php
-    $title = 'Department List';
-    $header = 'All Departments';
+    $title = 'District List';
+    $header = 'All Districts';
 @endphp
 
 @section('admin_content')
 <div class="card">
-    <div class="card-header">
-        <a href="{{ route('department.add', 0) }}" class="btn btn-primary">Add Department</a>
+    <div class="card-header d-flex justify-content-end">
+        <a href="{{ route('district.add', 0) }}" class="btn btn-primary float-end">Add District</a>
     </div>
     <div class="card-body">
         @if(session('success'))
@@ -19,22 +19,24 @@
             <thead>
                 <tr>
                     <th>#</th>
-                    <th>Department Name</th>
+                    <th>District Name (English)</th>
+                    <th>District Name (Bengali)</th>
                     <th>Division</th>
                     <th>Created</th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($departments as $index => $dept)
+                @foreach($districts as $index => $district)
                 <tr>
                     <td>{{ $index + 1 }}</td>
-                    <td>{{ $dept->name }}</td>
-                    <td>{{ $dept->division->name ?? '-' }}</td>
-                    <td>{{ $dept->created_at->format('d M, Y') }}</td>
+                    <td>{{ $district->district_name_en }}</td>
+                    <td>{{ $district->district_name_bn }}</td>
+                    <td>{{ $district->division->id ?? '-' }}</td>
+                    <td>{{ $district->created_at->format('d M, Y') }}</td>
                     <td>
-                        <a href="{{ route('department.edit', $dept->id) }}" class="btn btn-sm btn-info">Edit</a>
-                        <form action="{{ route('department.delete', $dept->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this department?');">
+                        <a href="{{ route('district.edit', $district->id) }}" class="btn btn-sm btn-info">Edit</a>
+                        <form action="{{ route('district.delete', $district->id) }}" method="POST" style="display:inline-block;" onsubmit="return confirm('Delete this district?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit" class="btn btn-sm btn-danger">Delete</button>

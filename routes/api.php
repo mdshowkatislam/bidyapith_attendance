@@ -15,8 +15,14 @@ use App\Http\Controllers\Api\ShiftController;
 use App\Http\Controllers\Api\SpecialWorkingdayController;
 use App\Http\Controllers\Api\WorkdayController;
 use App\Http\Controllers\Api\WorkdayGroupController;
+
+use App\Http\Controllers\Api\EmployeeManage\DivisionApiController ;
+use App\Http\Controllers\Api\EmployeeManage\DistrictApiController ;
+use App\Http\Controllers\Api\EmployeeManage\UpazilaApiController ;
+use App\Http\Controllers\Api\EmployeeManage\DesignationApiController ;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Log;
 
 // require __DIR__ . '/auth.php';
 
@@ -133,6 +139,18 @@ Route::get('set_db_location', fn() =>
             'message' => 'Choose the DB Location & Time Schedule to Sync',
         ], 200
     ));
+// Route::post('update_time_schedule', function(){
+
+//     Log::info('hi1');
+//     return response()->json(
+//         [
+//             'success' => true,
+//             'message' => 'fuck',
+//         ], 200
+//     );
+// });
+
+   
 Route::post('update_time_schedule', [DatabaseManageController::class, 'updateTimeSchedule']);
 
 // ✅ ATTENDANCE STATUS MANAGEMENT
@@ -163,4 +181,49 @@ Route::get('/date-shift-wise-attendance', [DateShiftAttendanceController::class,
 Route::get('/get-departments', [DateShiftAttendanceController::class, 'getDepartments']);
 Route::get('/get-sections', [DateShiftAttendanceController::class, 'getSections']);
 
-// });
+
+ // EMPLOYEE MANAGEMENT API
+ // ✅ DIVISION MANAGEMENT API
+Route::prefix('division_manage')->group(function () {
+    Route::get('/list', [DivisionApiController::class, 'index'])->name('api.division.index');
+    Route::post('/store', [DivisionApiController::class, 'store'])->name('api.division.store');
+    Route::get('/show/{id}', [DivisionApiController::class, 'show'])->name('api.division.show');
+    Route::put('/edit/{id}', [DivisionApiController::class, 'update'])->name('api.division.update');
+    Route::delete('/delete/{id}', [DivisionApiController::class, 'destroy'])->name('api.division.destroy');
+});
+
+
+// ✅ DISTRICT MANAGEMENT API
+Route::prefix('district_manage')->group(function () {
+    Route::get('/list', [DistrictApiController::class, 'index'])->name('api.districts.index');
+    Route::post('/store', [DistrictApiController::class, 'store'])->name('api.districts.store');
+    Route::get('/show/{id}', [DistrictApiController::class, 'show'])->name('api.districts.show');
+    Route::put('/update/{id}', [DistrictApiController::class, 'update'])->name('api.districts.update');
+    Route::delete('/delete/{id}', [DistrictApiController::class, 'destroy'])->name('api.districts.destroy');
+    
+    // Additional route for creating form data (divisions list)
+    Route::get('/create/data', [DistrictApiController::class, 'createData'])->name('api.districts.create.data');
+});
+
+// ✅ UPAZILA MANAGEMENT API
+Route::prefix('upazila_manage')->group(function () {
+    Route::get('/list', [UpazilaApiController::class, 'index'])->name('api.upazilas.index');
+    Route::post('/store', [UpazilaApiController::class, 'store'])->name('api.upazilas.store');
+    Route::get('/show/{id}', [UpazilaApiController::class, 'show'])->name('api.upazilas.show');
+    Route::put('/update/{id}', [UpazilaApiController::class, 'update'])->name('api.upazilas.update');
+    Route::delete('/delete/{id}', [UpazilaApiController::class, 'destroy'])->name('api.upazilas.destroy');
+    
+    // Additional route for creating form data (districts list)
+    Route::get('/create/data', [UpazilaApiController::class, 'createData'])->name('api.upazilas.create.data');
+});
+
+
+// ✅ DESIGNATION MANAGEMENT API
+
+Route::prefix('designation_manage')->group(function () {
+    Route::get('/list', [DesignationApiController::class, 'index'])->name('api.designation.index');
+    Route::post('/store', [DesignationApiController::class, 'store'])->name('api.designation.store');
+    Route::get('/show/{id}', [DesignationApiController::class, 'show'])->name('api.designation.show');
+    Route::put('/update/{id}', [DesignationApiController::class, 'update'])->name('api.designation.update');
+    Route::delete('/delete/{id}', [DesignationApiController::class, 'destroy'])->name('api.designation.destroy');
+});

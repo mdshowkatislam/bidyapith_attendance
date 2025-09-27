@@ -337,6 +337,7 @@ public function downloadPdf($id)
         }
 
         $group = new GroupResource($data);
+        Log::info(json_encode($group->toArray(request()),JSON_PRETTY_PRINT));
 
         // Custom paper size (width, height) in millimeters
         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
@@ -344,6 +345,7 @@ public function downloadPdf($id)
                   ->setOption('dpi', 96)
                   ->setOption('defaultFont', 'Arial')
                   ->setOption('isHtml5ParserEnabled', true);
+        //   return $pdf->stream('group-details.pdf');
 
         return $pdf->download('group-details-' . $id . '.pdf');
     } catch (\Exception $e) {

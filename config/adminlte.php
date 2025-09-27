@@ -341,12 +341,12 @@ return [
                         [
                             'text' => 'District',
                             'icon_color' => 'yellow',
-                            'route' => 'department.list',
+                            'route' => 'district.list',
                         ],
                         [
                             'text' => 'Upazila',
                             'icon_color' => 'green',
-                            'route' => 'section.list',
+                            'route' => 'upazila.list',
                         ],
                     ],
                 ],

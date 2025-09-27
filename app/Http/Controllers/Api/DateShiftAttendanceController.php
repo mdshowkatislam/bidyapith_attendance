@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Division;
-use App\Models\Department;
-use App\Models\Section;
+use App\Models\District;
+use App\Models\Upazila;
 use App\Models\Group;
 use App\Models\ShiftSetting;
 use Illuminate\Http\Request;
@@ -16,8 +16,8 @@ class DateShiftAttendanceController extends Controller
   public function index(){
        $shifts=ShiftSetting::where('status',1)->get();
        $divisions=Division::all();
-       $departments=Department::all();
-       $sections=Section::all();
+       $departments=District::all();
+       $sections=Upazila::all();
        $groups=Group::all();
        
 
@@ -34,17 +34,17 @@ class DateShiftAttendanceController extends Controller
     { 
         $divisionId = $request->division_id;
 
-        $departments = Department::where('division_id', $divisionId)->get();
+        $district = District::where('division_id', $divisionId)->get();
 
-        return response()->json($departments);
-    
+        return response()->json($district);
+
     }
 
     public function getSections(Request $request)
     {
        
-        $departmentId = $request->department_id;
-        $sections = Section::where('department_id', $departmentId)->get();
+        $districtId = $request->district_id;
+        $sections = Upazila::where('district_id', $districtId)->get();
 
         return response()->json($sections);
     }

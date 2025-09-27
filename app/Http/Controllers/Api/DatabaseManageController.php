@@ -51,7 +51,7 @@ class DatabaseManageController extends Controller
                 DB::commit();
 
                 return response()->json([
-                    'success' => true,
+                    'status' => true,
                     'message' => 'Schedule and DB location updated!',
                 ], 200);
             } else {
@@ -65,7 +65,7 @@ class DatabaseManageController extends Controller
             ]);
 
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'message' => 'Failed to update schedule. API or DB operation failed.',
                 'error'   => $e->getMessage(),
             ], 500);

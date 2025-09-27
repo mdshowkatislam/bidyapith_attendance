@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Controllers\Admin\DepartmentController;
+use App\Http\Controllers\Admin\DistrictController;
 use App\Http\Controllers\Admin\DivisionController;
 use App\Http\Controllers\Admin\EmployeeProfileController;
-use App\Http\Controllers\Admin\SectionController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\UpazilaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,23 +29,23 @@ Route::middleware('auth')->group(function () {
         Route::put('update/{id}', [DivisionController::class, 'update'])->name('division.update');
         Route::get('delete/{id}', [DivisionController::class, 'destroy'])->name('division.delete');
     });
-    // ✅ DEPARTMENT MANAGEMENT
-    Route::prefix('department')->group(function () {
-        Route::get('/list', [DepartmentController::class, 'index'])->name('department.list');
-        Route::post('/store', [DepartmentController::class, 'store'])->name('department.store');
-        Route::get('add/{id}', [DepartmentController::class, 'add'])->name('department.add');
-        Route::get('edit/{id}', [DepartmentController::class, 'edit'])->name('department.edit');
-        Route::put('update/{id}', [DepartmentController::class, 'update'])->name('department.update');
-        Route::delete('delete/{attendance_status}', [DepartmentController::class, 'destroy'])->name('department.delete');
+    // ✅ DISTRICT MANAGEMENT
+    Route::prefix('district')->group(function () {
+        Route::get('/list', [DistrictController::class, 'index'])->name('district.list');
+        Route::post('/store', [DistrictController::class, 'store'])->name('district.store');
+        Route::get('add/{id}', [DistrictController::class, 'add'])->name('district.add');
+        Route::get('edit/{id}', [DistrictController::class, 'edit'])->name('district.edit');
+        Route::put('update/{id}', [DistrictController::class, 'update'])->name('district.update');
+        Route::delete('delete/{attendance_status}', [DistrictController::class, 'destroy'])->name('district.delete');
     });
-    // ✅ SECTION MANAGEMENT
-    Route::prefix('section')->group(function () {
-        Route::get('/list', [SectionController::class, 'index'])->name('section.list');
-        Route::post('/store', [SectionController::class, 'store'])->name('section.store');
-        Route::get('add/{id}', [SectionController::class, 'add'])->name('section.add');
-        Route::get('edit/{id}', [SectionController::class, 'edit'])->name('section.edit');
-        Route::put('update/{id}', [SectionController::class, 'update'])->name('section.update');
-        Route::delete('delete/{attendance_status}', [SectionController::class, 'destroy'])->name('section.delete');
+    // ✅ Upazila MANAGEMENT
+    Route::prefix('upazila')->group(function () {
+        Route::get('/list', [UpazilaController::class, 'index'])->name('upazila.list');
+        Route::post('/store', [UpazilaController::class, 'store'])->name('upazila.store');
+        Route::get('add/{id}', [UpazilaController::class, 'add'])->name('upazila.add');
+        Route::get('edit/{id}', [UpazilaController::class, 'edit'])->name('upazila.edit');
+        Route::put('update/{id}', [UpazilaController::class, 'update'])->name('upazila.update');
+        Route::delete('delete/{attendance_status}', [UpazilaController::class, 'destroy'])->name('upazila.delete');
     });
     // ✅ EMPLOYEE PROFILE MANAGEMENT
     Route::prefix('employee_profile')->group(function () {
@@ -55,11 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::get('edit/{id}', [EmployeeProfileController::class, 'edit'])->name('employee_profile.edit');
         Route::put('update/{id}', [EmployeeProfileController::class, 'update'])->name('employee_profile.update');
         Route::delete('delete/{attendance_status}', [EmployeeProfileController::class, 'destroy'])->name('employee_profile.destroy');;
-
-        Route::get('/get-departments', [EmployeeProfileController::class, 'getDepartments'])->name('get.departments');
-        Route::get('/get-sections', [EmployeeProfileController::class, 'getSections'])->name('get.sections');
+        Route::get('/get-districts/{divisionId}', [EmployeeProfileController::class, 'getDistrictsByDivision'])->name('get.districts');
+        Route::get('/get-upazilas/{districtId}', [EmployeeProfileController::class, 'getUpazilasByDistrict'])->name('get.upazilas');
         Route::patch('employee-profile/{id}/toggle-status', [EmployeeProfileController::class, 'toggleStatus'])->name('employee_profile.toggleStatus');
-
     });
 });
 

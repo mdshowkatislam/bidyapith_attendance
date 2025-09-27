@@ -15,9 +15,16 @@
             @endif
 
             <div class="form-group">
-                <label for="name">Division Name</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name', $division->name ?? '') }}" required>
-                @error('name')
+                <label for=division_name_en>Division Name (English) <span class="text-danger">*</span></label>
+                <input type="text" name=division_name_en class="form-control" value="{{ old('division_name_en', $division->division_name_en?? '') }}" required>
+                @error('division_name_en')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
+            <div class="form-group">
+                <label for=division_name_bn>Division Name (Bangla)</label>
+                <input type="text" name=division_name_bn class="form-control" value="{{ old('division_name_bn', $division->division_name_bn?? '') }}" required>
+                @error('division_name_bn')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>

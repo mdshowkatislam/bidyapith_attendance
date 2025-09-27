@@ -24,11 +24,13 @@ class DivisionController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:divisions,name',
+            'division_name_en' => 'required|string|max:60|unique:divisions,division_name_en',
+            'division_name_bn' => 'nullable|string|max:60|unique:divisions,division_name_bn',
         ]);
 
         Division::create([
-            'name' => $request->name,
+            'division_name_en' => $request->division_name_en,
+            'division_name_bn' => $request->division_name_bn,
         ]);
 
         return redirect()->route('division.list')->with('success', 'Division created successfully.');
@@ -45,11 +47,13 @@ class DivisionController extends Controller
         $division = Division::findOrFail($id);
 
         $request->validate([
-            'name' => 'required|string|max:255|unique:divisions,name,' . $division->id,
+            'division_name_en' => 'required|string|max:60|unique:divisions,division_name_en,' . $division->id,
+            'division_name_bn' => 'nullable|string|max:60|unique:divisions,division_name_bn,' . $division->id,
         ]);
 
         $division->update([
-            'name' => $request->name,
+            'division_name_en' => $request->division_name_en,
+            'division_name_bn' => $request->division_name_bn,
         ]);
 
         return redirect()->route('division.list')->with('success', 'Division updated successfully.');

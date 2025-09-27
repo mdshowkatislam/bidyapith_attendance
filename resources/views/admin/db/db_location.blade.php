@@ -137,6 +137,9 @@
                     location: $('#customFile').val(),
                     syncTimeName: $('#syncTimeId').val()
                 };
+                
+            // alert(JSON.stringify(formData));
+      
 
                 $.ajax({
                     url: 'http://attendance2.localhost.com/api/update_time_schedule',
@@ -147,6 +150,7 @@
                         // Optionally reset form or update UI
                     },
                     error: function(xhr) {
+                       
                         if (xhr.status === 422) {
                             let errors = xhr.responseJSON.errors;
                             let errorMessages = '';

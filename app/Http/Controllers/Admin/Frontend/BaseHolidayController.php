@@ -27,7 +27,7 @@ class BaseHolidayController extends Controller
     }
 
     public function edit($id)
-    {  ;
+    {  
         $response = Http::get(url("http://attendance2.localhost.com/api/holiday_manage/show/{$id}"));
 
         $holiday =(object) $response->json();

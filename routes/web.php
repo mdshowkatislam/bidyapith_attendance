@@ -6,6 +6,12 @@ use App\Http\Controllers\Admin\EmployeeProfileController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UpazilaController;
 use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Log;
+
+// Route::get('/test-log', function () {
+//     Log::debug('This is a debug log test');
+//     return 'Log written!';
+// });
 
 Route::get('/', function () {
     return view('auth.login');
@@ -54,7 +60,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/add', [EmployeeProfileController::class, 'add'])->name('employee_profile.add');
         Route::get('edit/{id}', [EmployeeProfileController::class, 'edit'])->name('employee_profile.edit');
         Route::put('update/{id}', [EmployeeProfileController::class, 'update'])->name('employee_profile.update');
-        Route::delete('delete/{attendance_status}', [EmployeeProfileController::class, 'destroy'])->name('employee_profile.destroy');;
+        Route::delete('delete/{attendance_status}', [EmployeeProfileController::class, 'destroy'])->name('employee_profile.destroy');
         Route::get('/get-districts/{divisionId}', [EmployeeProfileController::class, 'getDistrictsByDivision'])->name('get.districts');
         Route::get('/get-upazilas/{districtId}', [EmployeeProfileController::class, 'getUpazilasByDistrict'])->name('get.upazilas');
         Route::patch('employee-profile/{id}/toggle-status', [EmployeeProfileController::class, 'toggleStatus'])->name('employee_profile.toggleStatus');

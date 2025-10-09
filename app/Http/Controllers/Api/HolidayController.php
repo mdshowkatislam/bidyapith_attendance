@@ -12,7 +12,8 @@ class HolidayController extends Controller
 { use ApiResponse;
     // GET all holidays
     public function index()
-    {
+    { 
+        Log::info('hit');
         $holidays = Holiday::all();
 
         if($holidays->isEmpty()){

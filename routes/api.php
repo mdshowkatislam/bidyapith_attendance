@@ -20,9 +20,11 @@ use App\Http\Controllers\Api\EmployeeManage\DivisionApiController ;
 use App\Http\Controllers\Api\EmployeeManage\DistrictApiController ;
 use App\Http\Controllers\Api\EmployeeManage\UpazilaApiController ;
 use App\Http\Controllers\Api\EmployeeManage\DesignationApiController ;
+use App\Http\Controllers\Api\EmployeeManage\EmployeeApiController ;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 // use Illuminate\Support\Facades\Log;
+
 
 // require __DIR__ . '/auth.php';
 
@@ -227,3 +229,15 @@ Route::prefix('designation_manage')->group(function () {
     Route::put('/update/{id}', [DesignationApiController::class, 'update'])->name('api.designation.update');
     Route::delete('/delete/{id}', [DesignationApiController::class, 'destroy'])->name('api.designation.destroy');
 });
+
+
+// 👨‍💻 EMPLOYEE MANAGEMENT API (Teacher + Staff + Student) 👈
+
+Route::prefix('employee_manage')->group(function () {
+    Route::get('/list', [EmployeeApiController::class, 'index'])->name('api.employee.index');
+    Route::post('/store', [EmployeeApiController::class, 'store'])->name('api.employee.store');
+    Route::get('/show/{id}', [EmployeeApiController::class, 'show'])->name('api.employee.show');
+    Route::put('/update/{id}', [EmployeeApiController::class, 'update'])->name('api.employee.update');
+    Route::delete('/delete/{id}', [EmployeeApiController::class, 'destroy'])->name('api.employee.destroy');
+});
+

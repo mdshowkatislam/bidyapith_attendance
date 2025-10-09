@@ -123,33 +123,35 @@
                                     <option value="">-- Choose Division --</option>
                                     {{-- Loop divisions here --}}
                                     @foreach ($divisions as $division)
-                                        <option value="{{ $division['id'] }}">{{ $division['name'] }}</option>
+                                        <option value="{{ $division['id'] }}">{{ $division['division_name_en'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
+
+
                             <div class="col-md-3 mb-3">
-                                <label for="department_id">Select Department</label>
-                                <select id="department_id"
-                                        name="department_id"
+                                <label for="district_id">Select District</label>
+                                <select id="district_id"
+                                        name="district_id"
                                         class="form-control">
-                                    <option value="">-- Choose Department</option>
+                                    <option value="">-- Choose District</option>
                                     {{-- Loop departments here --}}
-                                    @foreach ($departments as $department)
-                                        <option value="{{ $department['id'] }}">{{ $department['name'] }}</option>
+                                    @foreach ($districts as $item)
+                                        <option value="{{ $item['id'] }}">{{ $item['district_name_en'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="col-md-3 mb-3 ">
-                                <label for="section_id">Select Section</label>
-                                <select id="section_id"
-                                        name="section_id"
+                                <label for="upazila_id">Select Upazila</label>
+                                <select id="upazila_id"
+                                        name="upazila_id"
                                         class="form-control">
-                                    <option value="">-- Choose Section --</option>
+                                    <option value="">-- Choose Upazila --</option>
                                     {{-- Loop sections here --}}
-                                    @foreach ($sections as $section)
-                                        <option value="{{ $section['id'] }}">{{ $section['name'] }}</option>
+                                    @foreach ($upazilas as $upazila)
+                                        <option value="{{ $upazila['id'] }}">{{ $upazila['upazila_name_en'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -215,51 +217,49 @@
                 }
 
                 // Your existing removal of unnecessary select names
-                if (myJQ("select[name='section_id']").val()) {
-                    myJQ("select[name='department_id']").removeAttr('name');
+                if (myJQ("select[name='upazila_id']").val()) {
+                    myJQ("select[name='district_id']").removeAttr('name');
                     myJQ("select[name='division_id']").removeAttr('name');
                 }
-                if (myJQ("select[name='department_id']").val()) {
+                if (myJQ("select[name='district_id']").val()) {
                     myJQ("select[name='division_id']").removeAttr('name');
                 }
             });
 
-            // partisal division,department and section selection.
+            // partisal division,district and upazila selection.
 
             $(document).ready(function() {
 
-                // Initially clear and disable department + section
-                let $department = $("select[name='department_id']").empty()
-                    .append('<option value="">Select Department</option>')
+                // Initially clear and disable district + upazila
+                let $district = $("select[name='district_id']").empty()
+                    .append('<option value="">Select District</option>')
                     .prop('disabled', true);
 
-                let $section = $("select[name='section_id']").empty()
-                    .append('<option value="">Select Section</option>')
+                let $upazila = $("select[name='upazila_id']").empty()
+                    .append('<option value="">Select Upazila</option>')
                     .prop('disabled', true);
 
                 // Division change -> load departments
                 $("select[name='division_id']").on("change", function() {
                     let divisionId = $(this).val();
 
-                    $department.empty().append('<option value="">Select Department</option>').prop(
+                    $district.empty().append('<option value="">Select District</option>').prop(
                         'disabled', true);
-                    $section.empty().append('<option value="">Select Section</option>').prop(
+                    $upazila.empty().append('<option value="">Select Upazila</option>').prop(
                         'disabled', true);
 
                     if (divisionId) {
                         $.ajax({
-                            url: '{{ route('get.departments') }}',
+                            url: '/get-districts/' + divisionId,
                             type: 'GET',
-                            data: {
-                                division_id: divisionId
-                            },
+                           
                             success: function(data) {
                                 $.each(data, function(key, value) {
-                                    $department.append('<option value="' + value
-                                        .id + '">' + value.name +
+                                    $district.append('<option value="' + value
+                                        .id + '">' + value.district_name_en +
                                         '</option>');
                                 });
-                                $department.prop('disabled', false);
+                                $district.prop('disabled', false);
                             },
                             error: function(xhr) {
                                 console.error('ajax error', xhr);
@@ -268,27 +268,25 @@
                     }
                 });
 
-                // Department change -> load sections
-                $department.on('change', function() {
-                    let departmentId = $(this).val();
+                // District change -> load sections
+                $district.on('change', function() {
+                    let districtId = $(this).val();
 
-                    $section.empty().append('<option value="">Select Section</option>').prop(
+                    $upazila.empty().append('<option value="">Select Upazila</option>').prop(
                         'disabled', true);
 
-                    if (departmentId) {
+                    if (districtId) {
                         $.ajax({
-                            url: '{{ route('get.sections') }}',
+                            url: '/get-upazilas/' + districtId,
                             type: 'GET',
-                            data: {
-                                department_id: departmentId
-                            },
+                           
                             success: function(data) {
                                 $.each(data, function(key, value) {
-                                    $section.append('<option value="' + value
-                                        .id + '">' + value.name +
+                                    $php.append('<option value="' + value
+                                        .id + '">' + value.upazila_name_en +
                                         '</option>');
                                 });
-                                $section.prop('disabled', false);
+                                $upazila.prop('disabled', false);
                             }
                         });
                     }
@@ -296,7 +294,7 @@
 
             });
 
-            // -- End of division wise department and section selection --
+            // -- End of division wise district and upazila selection --
 
             // Initialize inputs empty and enabled
             myJQ('#date_range').val('').prop('disabled', false);
@@ -360,8 +358,8 @@
 
                 myJQ('#shift_id').val('').prop('disabled', false);
                 myJQ('#division_id').val('').prop('disabled', false);
-                myJQ('#department_id').val('').prop('disabled', false);
-                myJQ('#section_id').val('').prop('disabled', false);
+                myJQ('#district_id').val('').prop('disabled', false);
+                myJQ('#upazila_id').val('').prop('disabled', false);
                 myJQ('#group_id').val('').prop('disabled', false);
             });
 

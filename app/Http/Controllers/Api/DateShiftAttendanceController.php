@@ -16,16 +16,16 @@ class DateShiftAttendanceController extends Controller
   public function index(){
        $shifts=ShiftSetting::where('status',1)->get();
        $divisions=Division::all();
-       $departments=District::all();
-       $sections=Upazila::all();
+       $districts=District::all();
+       $upazilas=Upazila::all();
        $groups=Group::all();
        
 
         return response()->json([
                     'shifts' =>  $shifts,
                     'divisions' =>  $divisions,
-                    'departments' =>  $departments,
-                    'sections' =>  $sections,
+                    'districts' =>  $districts,
+                    'upazilas' =>  $upazilas,
                     'groups' =>  $groups,
                 ]);
        
@@ -44,9 +44,9 @@ class DateShiftAttendanceController extends Controller
     {
        
         $districtId = $request->district_id;
-        $sections = Upazila::where('district_id', $districtId)->get();
+        $upazilas = Upazila::where('district_id', $districtId)->get();
 
-        return response()->json($sections);
+        return response()->json($upazilas);
     }
   
 

@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 class BaseGroupController extends Controller
 {
     public function index()
-    {
+    {;
         try {
            
             $response = Http::withHeaders([
@@ -49,7 +49,7 @@ class BaseGroupController extends Controller
     }
 
     public function add()
-    {
+    { 
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
@@ -57,7 +57,7 @@ class BaseGroupController extends Controller
             ])
                 ->withOptions(['verify' => false])
                 ->get('http://attendance2.localhost.com/api/group_manage/add');
-            // dd($response->json());
+       
             if ($response->successful()) {
                 $data = $response->json();
 

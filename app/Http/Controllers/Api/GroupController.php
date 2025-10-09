@@ -46,10 +46,10 @@ class GroupController extends Controller
         //     'workDays',
         //     'employees',
         // ])->get();
- 
+
 
         $groups = Group::all();
-
+ Log::info('yy');
         if ($groups->isEmpty()) {
             return $this->apisuccessResponse('No groups found.', 404);
         }
@@ -58,14 +58,15 @@ class GroupController extends Controller
 
     public function add()
     {
-        // Get all active branches
+
         $branches = Branch::where('rec_status', 1)
             ->select('branch_code', 'branch_name_en')
             ->get();
 
         $shifts = collect();
+     
         $workDays = WorkDay::select('id', 'day_name')->get();
-        $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id', 'name')->get();
+        $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id')->get();
 
         if ($employees->isEmpty()) {
             return $this->apisuccessResponse('No employees available to assign.', 404);

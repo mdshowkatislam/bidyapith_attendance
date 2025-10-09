@@ -19,8 +19,8 @@ class AttendanceController extends Controller
       'shift_id' => 'required|integer|exists:shift_settings,id',
       'date_range' => 'nullable|string|required_without:month',
       'month' => 'nullable|date_format:Y-m|required_without:date_range',
-      'section_id' => 'nullable|integer|exists:sections,id',
-      'department_id' => 'nullable|integer|exists:departments,id',
+      'upazila_id' => 'nullable|integer|exists:upazilas,id',
+      'district_id' => 'nullable|integer|exists:districts,id',
       'division_id' => 'nullable|integer|exists:divisions,id',
       'group_id' => 'nullable|integer|exists:groups,id',
     ]);
@@ -103,8 +103,8 @@ class AttendanceController extends Controller
       })
       ->join('shift_settings', 'shift_settings.id', '=', 'groups.shift_id')
       ->leftJoin('divisions', 'divisions.id', '=', 'employees.division_id')
-      ->leftJoin('departments', 'departments.id', '=', 'employees.department_id')
-      ->leftJoin('sections', 'sections.id', '=', 'employees.section_id')
+      ->leftJoin('districts', 'districts.id', '=', 'employees.district_id')
+      ->leftJoin('upazilas', 'upazilas.id', '=', 'employees.upazila_id')
       ->select(
         'employees.id',
         'employees.profile_id',
@@ -114,18 +114,18 @@ class AttendanceController extends Controller
         'shift_settings.end_time',
         'groups.flexible_in_time',
         'groups.flexible_out_time',
-        'divisions.name as division_name',
-        'departments.name as department_name',
-        'sections.name as section_name',
+        'divisions.name as division_name_en',
+        'districts.name as district_name_en',
+        'upazilas.name as upazila_name_en',
         'divisions.id as division_id',
-        'departments.id as department_id',
-        'sections.id as section_id'
+        'districts.id as district_id',
+        'upazilas.id as upazila_id'
       );
 
-    if (!empty($validated['section_id'])) {
-      $query->where('employees.section_id', $validated['section_id']);
-    } elseif (!empty($validated['department_id'])) {
-      $query->where('employees.department_id', $validated['department_id']);
+    if (!empty($validated['upazila_id'])) {
+      $query->where('employees.upazila_id', $validated['upazila_id']);
+    } elseif (!empty($validated['district_id'])) {
+      $query->where('employees.district_id', $validated['district_id']);
     } elseif (!empty($validated['division_id'])) {
       $query->where('employees.division_id', $validated['division_id']);
     }
@@ -278,11 +278,11 @@ class AttendanceController extends Controller
   private function absentRecord($emp, $date)
   {
     return (object) [
-      'name' => $emp->name,
+      'id' => $emp->id,
       'group_name' => $emp->group_name,
-      'division' => $emp->division_name,
-      'department' => $emp->department_name,
-      'section' => $emp->section_name,
+      'division' => $emp->division_name_en,
+      'department' => $emp->district_name_en,
+      'upazila' => $emp->upazila_name_en,
       'date' => $date,
       'in_time' => null,
       'out_time' => null,
@@ -337,11 +337,11 @@ class AttendanceController extends Controller
       $remarks[] = 'Present for full shift.';
 
     return (object) [
-      'name' => $emp->name,
+      'id' => $emp->id,
       'group_name' => $emp->group_name,
-      'division' => $emp->division_name,
-      'department' => $emp->department_name,
-      'section' => $emp->section_name,
+      'division' => $emp->division_name_en,
+      'department' => $emp->district_name_en,
+      'upazila' => $emp->upazila_name_en,
       'date' => $date,
       'in_time' => $record->in_time,
       'out_time' => $record->out_time,

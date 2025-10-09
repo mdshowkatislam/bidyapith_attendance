@@ -19,13 +19,14 @@ class BaseDateShiftAttendanceController extends Controller
             ->withOptions(['verify' => false])
             ->get('http://attendance2.localhost.com/api/date-shift-wise-attendance');
         $json = $response->json();
+   
         // dd($json);
 
         return view('admin.date_shift.index', [
             'shifts' => $json['shifts'] ?? null,
             'divisions' => $json['divisions'] ?? null,
-            'departments' => $json['departments'] ?? null,
-            'sections' => $json['sections'] ?? null,
+            'districts' => $json['districts'] ?? null,
+            'upazilas' => $json['upazilas'] ?? null,
             'groups' => $json['groups'] ?? null,
         ]);
     }

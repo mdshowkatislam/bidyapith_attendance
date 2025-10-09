@@ -3,23 +3,38 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use App\Models\CheckInOut;
+use App\Models\Upazila;
+use App\Models\District;
+use App\Models\Division;
 
-class Employee extends Model
+class Employee_old extends Model
 {
-    protected $table = 'employees';
+    protected $table = "employees";
 
     protected $fillable = [
         'profile_id',
-        'eiin',
-        'caid',
-        'person_type'
+        'name',
+        'father_name',
+        'mother_name',
+        'dob',
+        'joining_date',
+        'picture',
+        'nid',
+        'mobile_number',
+        'present_address',
+        'permanent_address',
+        'division_id',
+        'district_id',
+        'upazila_id',
+        'section_id',
+        'badgenumber',
+        'company_id',
+        'card_number',
+        'status'
     ];
-// FOR BETTER USE IN CONTROLLER . ->where('person', Employee::TYPE_TEACHER )
-    const TYPE_TEACHER = 1;
-    const TYPE_STAFF = 2;
-    const TYPE_STUDENT = 3;
-    // Relationship: Employee has many CheckInOut records
 
+    // Relationship: Employee has many CheckInOut records
     public function checkInOut()
     {
         return $this->hasMany(CheckInOut::class, 'user_id', 'profile_id');
@@ -42,7 +57,6 @@ class Employee extends Model
     {
         return $this->belongsTo(Division::class);
     }
-
     public function groups()
     {
         return $this->belongsToMany(Group::class, 'employee_group', 'employee_id', 'group_id');

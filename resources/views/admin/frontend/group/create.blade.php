@@ -98,7 +98,7 @@
                             multiple="multiple"
                             style="width:100%">
                         @foreach ($employees as $emp)
-                            <option value="{{ $emp['id'] }}">{{ $emp['name'] }}</option>
+                            <option value="{{ $emp['id'] }}">{{ $emp['id'] }}</option>
                         @endforeach
                     </select>
                 </div>

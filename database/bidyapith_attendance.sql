@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Sep 27, 2025 at 05:40 PM
+-- Generation Time: Oct 09, 2025 at 04:23 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -190,23 +190,18 @@ CREATE TABLE IF NOT EXISTS `designations` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `designations_uid_unique` (`uid`)
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Dumping data for table `designations`
 --
 
 INSERT INTO `designations` (`id`, `uid`, `designation_name`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Head Teacher', NULL, NULL),
-(2, 2, 'Assistant Teacher', NULL, NULL),
-(3, 3, 'Trade Instructor', NULL, NULL),
-(4, 4, 'Senior Asst. Teacher', NULL, NULL),
+(1, 1, 'Head Teacher nafi', NULL, '2025-09-29 02:33:19'),
+(2, 2, 'Assistant Teacher onu', NULL, '2025-09-29 02:36:06'),
+(3, 3, 'Trade Instructor 1', NULL, '2025-09-29 02:53:07'),
+(4, 4, 'Senior Asst. Teacher1', NULL, '2025-09-29 02:53:18'),
 (5, 5, 'Lab Assistant (Electronics)', NULL, NULL),
-(6, 6, 'Lab Assistant (Computer)', NULL, NULL),
-(7, 7, 'Assistant Head Teacher', NULL, NULL),
-(8, 8, 'Senior Assistant Teacher', NULL, NULL),
-(9, 9, 'Teacher', NULL, NULL),
-(10, 10, 'Senior Teacher', NULL, NULL),
 (11, 11, 'Principal', NULL, NULL),
 (12, 12, 'Vice Principal', NULL, NULL),
 (13, 13, 'Professor', NULL, NULL),
@@ -215,7 +210,12 @@ INSERT INTO `designations` (`id`, `uid`, `designation_name`, `created_at`, `upda
 (16, 16, 'Lecturer ', NULL, NULL),
 (17, 17, 'Madrasha Super', NULL, NULL),
 (18, 18, 'Computer Operator', NULL, NULL),
-(19, 1844236228821457, 'abul-1', '2025-09-25 05:45:24', '2025-09-25 05:47:12');
+(19, 1844236228821457, 'abul-2', '2025-09-25 05:45:24', '2025-09-29 02:51:58'),
+(20, 1844586501117341, 'nafi', '2025-09-29 02:32:50', '2025-09-29 02:32:50'),
+(21, 1844586641274988, 'onu', '2025-09-29 02:35:04', '2025-09-29 02:35:04'),
+(22, 1844587824323138, 'poty', '2025-09-29 02:53:52', '2025-09-29 02:53:52'),
+(23, 1844589514254963, 'ops', '2025-09-29 03:20:44', '2025-09-29 03:20:44'),
+(24, 1844591509526436, 'edewd', '2025-09-29 03:52:26', '2025-09-29 03:52:26');
 
 -- --------------------------------------------------------
 
@@ -348,50 +348,28 @@ INSERT INTO `divisions` (`id`, `uid`, `division_name_en`, `division_name_bn`, `c
 DROP TABLE IF EXISTS `employees`;
 CREATE TABLE IF NOT EXISTS `employees` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `profile_id` int NOT NULL,
-  `name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `father_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mother_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `dob` date DEFAULT NULL,
-  `joining_date` date DEFAULT NULL,
-  `picture` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `nid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mobile_number` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `present_address` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
-  `permanent_address` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
-  `division_id` bigint UNSIGNED NOT NULL,
-  `district_id` bigint UNSIGNED NOT NULL,
-  `upazila_id` bigint UNSIGNED NOT NULL,
-  `badgenumber` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `company_id` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `card_number` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `status` tinyint NOT NULL DEFAULT '1',
+  `eiin` bigint DEFAULT NULL,
+  `caid` bigint DEFAULT NULL,
+  `profile_id` int NOT NULL COMMENT 'emp_id',
+  `person_type` tinyint NOT NULL COMMENT '1 = Teacher, 2 = Staff, 3 = Student',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
-  `designation_id` int DEFAULT NULL,
-  `designation_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `employees_profile_id_unique` (`profile_id`),
-  KEY `employees_division_id_foreign` (`division_id`),
-  KEY `employees_department_id_foreign` (`district_id`),
-  KEY `employees_section_id_foreign` (`upazila_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+  UNIQUE KEY `employees_caid_unique` (`caid`)
+) ENGINE=MyISAM AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`id`, `profile_id`, `name`, `father_name`, `mother_name`, `dob`, `joining_date`, `picture`, `nid`, `mobile_number`, `present_address`, `permanent_address`, `division_id`, `district_id`, `upazila_id`, `badgenumber`, `company_id`, `card_number`, `status`, `created_at`, `updated_at`, `designation_id`, `designation_name`) VALUES
-(2, 62, 'tuhin', 'hossain', 'selina', '1994-12-10', '2023-07-01', 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '12345678', '01534770999', 'hazrat-para-road,', 'Permanent Address', 2, 1, 6, '12', 'nano12', '123', 1, '2025-07-27 22:40:20', '2025-08-10 03:40:13', NULL, NULL),
-(1, 64, 'toha', 'toha father name', 'toha mother name', '2005-08-01', '2024-08-01', 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '1234', '01534770999', 'dhaka', 'chittagong', 2, 1, 6, '64', '1234', '1234', 1, NULL, '2025-08-10 03:40:12', NULL, NULL),
-(3, 58, 'Rumel', 'father_name', 'mother_name', '1995-08-01', NULL, 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '1234', '01534770999', 'dhaka', 'borishal', 3, 5, 12, '58', '123', '1234', 1, NULL, '2025-08-12 03:30:01', NULL, NULL),
-(4, 55, 'Mahfuz', 'father_name', 'mother_name', '1996-08-01', NULL, 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '123', '01534770999', 'dhaka', 'Rajshahi', 2, 3, 1, '55', '123', '12', 1, NULL, '2025-08-10 03:40:04', NULL, NULL),
-(5, 59, 'Rizvi', 'father_name Rizvi', 'mother_name Rizvi', '2015-08-06', NULL, NULL, '123', '01534770999', 'dhaka', 'Khulna', 3, 2, 1, '32', '987', '456', 1, NULL, '2025-08-10 03:40:08', NULL, NULL),
-(9, 100, 'ripon', 'ripon father', 'ripon mother', '2000-12-12', '2024-10-15', 'employee_pictures/4Pq9EfauU50KHKqN3fyxOQEfR4jwPO32VrltkY6b.jpg', '11111111111111', '9999999999999', 'hp gym center,moyenar bag road,dhaka,bangladesh', 'Permanent Address', 4, 6, 14, '1212', 'nanosoft', 'asdf', 1, '2025-08-12 02:48:16', '2025-08-12 03:11:02', NULL, NULL),
-(6, 57, 'Rasel Ahmed', 'Rasel Ahmed father_name', 'Rasel Ahmed mother_name', '1985-08-01', NULL, 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '56745', '01718366277', 'dhaka', 'Laksham', 2, 3, 3, '3453', '5673', '78978', 1, NULL, '2025-08-10 03:40:07', NULL, NULL),
-(7, 51, 'kutub', 'kutub father_name', 'kutub mother_name', '1999-01-01', NULL, 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '56715', '01544770888', 'dhaka', 'Rongpur', 4, 7, 16, '34534534', '54344', '723', 0, NULL, '2025-09-24 23:10:21', NULL, NULL),
-(8, 52, 'Rakesh', 'father_name Rakesh', 'father_name Rakesh', '1991-01-01', '2024-08-01', 'employee_pictures/IdWOQoApaB4wA7tQbka8hlhRFm49zFmqHELmTuqA.png', '344', '444', 'Gajipur', 'Narshingdi', 2, 2, 2, '666', '333', '555', 1, NULL, '2025-08-10 03:40:05', NULL, NULL),
-(10, 211, 'ripon', 'father_name', NULL, NULL, NULL, NULL, NULL, '01534770999', 'hp gym center,moyenar bag road,dhaka,bangladesh', NULL, 2, 1, 6, NULL, 'nanosoft', NULL, 1, '2025-08-12 02:52:15', '2025-08-12 03:06:20', NULL, NULL);
+INSERT INTO `employees` (`id`, `eiin`, `caid`, `profile_id`, `person_type`, `created_at`, `updated_at`) VALUES
+(1, 134172, 113417220240078, 64, 1, '2025-10-07 05:53:06', '2025-10-07 05:53:06'),
+(2, 134172, 113417220240079, 58, 1, '2025-10-07 06:25:42', '2025-10-07 06:25:42'),
+(3, 134172, 113417220240080, 55, 1, '2025-10-07 06:26:35', '2025-10-07 06:26:35'),
+(4, 134172, 6122270001, 62, 2, '2025-10-07 06:31:20', '2025-10-07 06:31:20'),
+(5, 134172, 6340020001, 59, 2, '2025-10-07 06:32:28', '2025-10-07 06:32:28'),
+(6, 134172, 6481220001, 57, 2, '2025-10-07 06:33:55', '2025-10-07 06:33:55');
 
 -- --------------------------------------------------------
 
@@ -519,7 +497,7 @@ CREATE TABLE IF NOT EXISTS `holidays` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `holidays_holiday_name_start_date_unique` (`holiday_name`,`start_date`)
-) ENGINE=MyISAM AUTO_INCREMENT=33 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=35 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `holidays`
@@ -534,7 +512,9 @@ INSERT INTO `holidays` (`id`, `holiday_name`, `start_date`, `end_date`, `descrip
 (17, 'nafi', '2025-09-24', '2025-09-25', 'nafi', 0, '2025-09-23 03:24:32', '2025-09-23 04:36:57'),
 (18, 'test', '2025-09-24', '2025-09-26', 'test', 0, '2025-09-23 03:29:14', '2025-09-23 04:34:54'),
 (19, 'test 1', '2025-09-24', NULL, 'test 1', 0, '2025-09-23 03:33:50', '2025-09-23 04:34:20'),
-(32, 'xxxx', '2025-09-22', NULL, 'xxxxx', 1, '2025-09-23 04:43:05', '2025-09-24 02:08:24');
+(32, 'xxxx', '2025-09-22', NULL, 'xxxxx', 1, '2025-09-23 04:43:05', '2025-09-24 02:08:24'),
+(34, 'erfrg', '2025-09-04', NULL, 'regreg', 1, '2025-09-29 03:57:20', '2025-09-29 03:57:20'),
+(33, 'Boro din', '2025-12-25', NULL, 'Boro din', 0, '2025-09-27 23:03:25', '2025-09-27 23:03:46');
 
 -- --------------------------------------------------------
 
@@ -588,7 +568,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `migration` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `migrations`
@@ -620,7 +600,8 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (69, '2023_09_21_142202_create_teachers_table', 32),
 (70, '2023_09_23_073501_create_students_table', 33),
 (71, '2023_11_04_062551_create_designations_table', 33),
-(72, '2025_09_25_081010_add_designation_to_employee_table', 34);
+(72, '2025_09_25_081010_add_designation_to_employee_table', 34),
+(73, '2025_10_07_102426_create_employees_table', 35);
 
 -- --------------------------------------------------------
 

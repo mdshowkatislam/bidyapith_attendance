@@ -16,8 +16,8 @@ class Group extends Model
     protected $fillable = [
         'group_name',
         'description',
-        'branch_id',
-        'shift_id',
+        'branch_uid',
+        'shift_uid',
         'status',
         'flexible_in_time',
         'flexible_out_time'
@@ -36,13 +36,13 @@ class Group extends Model
 public function getBranchDataAttribute()
 {
     $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
-    return ExternalDataService::fetchBranchDetails($baseUrl, $this->branch_id);
+    return ExternalDataService::fetchBranchDetails($baseUrl, $this->branch_uid);
 }
 
 public function getShiftDataAttribute()
 {
     $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
-    return ExternalDataService::fetchShiftDetails($baseUrl, $this->shift_id);
+    return ExternalDataService::fetchShiftDetails($baseUrl, $this->shift_uid);
 }
 
     /**

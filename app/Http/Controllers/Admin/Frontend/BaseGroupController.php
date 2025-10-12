@@ -15,7 +15,7 @@ class BaseGroupController extends Controller
     public function index()
     {;
         try {
-           \Log::info("fuck");
+         
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'accept' => 'application/json',

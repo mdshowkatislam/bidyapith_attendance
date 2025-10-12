@@ -14,15 +14,12 @@ return new class extends Migration {
             $table->id();
             $table->string('group_name')->unique();
             $table->text('description')->nullable();
-            $table->unsignedBigInteger('branch_id');
-            $table->unsignedBigInteger('shift_id');
+            $table->unsignedBigInteger('branch_uid'); // from outer service
+            $table->unsignedBigInteger('shift_uid');  // from outer service
             $table->tinyInteger('status')->default(1);
             $table->integer('flexible_in_time')->nullable();
             $table->integer('flexible_out_time')->nullable();
             $table->timestamps();
-
-            $table->foreign('branch_id')->references('id')->on('branchs')->onDelete('cascade');
-            $table->foreign('shift_id')->references('id')->on('shifts')->onDelete('cascade');
         });
     }
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 09, 2025 at 01:14 PM
+-- Generation Time: Oct 12, 2025 at 10:11 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -63,9 +63,9 @@ CREATE TABLE IF NOT EXISTS `branches` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `uid` bigint DEFAULT NULL,
   `branch_code` bigint NOT NULL,
-  `branch_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `branch_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `branch_location` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch_location` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `head_of_branch_id` bigint DEFAULT NULL,
   `eiin` bigint DEFAULT NULL,
   `rec_status` tinyint NOT NULL DEFAULT '1',
@@ -367,7 +367,7 @@ INSERT INTO `employees` (`id`, `eiin`, `caid`, `profile_id`, `person_type`, `cre
 (1, 134172, 113417220240078, 64, 1, '2025-10-07 05:53:06', '2025-10-07 05:53:06'),
 (2, 134172, 113417220240079, 58, 1, '2025-10-07 06:25:42', '2025-10-07 06:25:42'),
 (3, 134172, 113417220240080, 55, 1, '2025-10-07 06:26:35', '2025-10-07 06:26:35'),
-(4, 134172, 6122270001, 62, 2, '2025-10-07 06:31:20', '2025-10-07 06:31:20'),
+(4, 134172, 6122270001, 62, 1, '2025-10-07 06:31:20', '2025-10-07 06:31:20'),
 (5, 134172, 6340020001, 59, 2, '2025-10-07 06:32:28', '2025-10-07 06:32:28'),
 (6, 134172, 6481220001, 57, 2, '2025-10-07 06:33:55', '2025-10-07 06:33:55');
 
@@ -381,26 +381,22 @@ DROP TABLE IF EXISTS `employee_group`;
 CREATE TABLE IF NOT EXISTS `employee_group` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `group_id` bigint UNSIGNED NOT NULL,
-  `employee_id` bigint UNSIGNED NOT NULL,
+  `employee_emp_id` bigint UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `employee_group_employee_id_unique` (`employee_id`),
+  UNIQUE KEY `employee_group_employee_emp_id_unique` (`employee_emp_id`),
   KEY `employee_group_group_id_foreign` (`group_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `employee_group`
 --
 
-INSERT INTO `employee_group` (`id`, `group_id`, `employee_id`, `created_at`, `updated_at`) VALUES
-(1, 1, 2, NULL, NULL),
-(23, 4, 7, NULL, NULL),
-(22, 4, 6, NULL, NULL),
-(21, 3, 9, NULL, NULL),
-(20, 3, 5, NULL, NULL),
-(19, 2, 3, NULL, NULL),
-(18, 2, 1, NULL, NULL);
+INSERT INTO `employee_group` (`id`, `group_id`, `employee_emp_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 62, NULL, NULL),
+(2, 1, 55, NULL, NULL),
+(3, 1, 58, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -430,8 +426,9 @@ CREATE TABLE IF NOT EXISTS `failed_jobs` (
 DROP TABLE IF EXISTS `groups`;
 CREATE TABLE IF NOT EXISTS `groups` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
-  `group_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
-  `description` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `group_name` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb3_unicode_ci,
+  `branch_id` bigint UNSIGNED NOT NULL,
   `shift_id` bigint UNSIGNED NOT NULL,
   `status` tinyint NOT NULL DEFAULT '1',
   `flexible_in_time` int DEFAULT NULL,
@@ -440,18 +437,16 @@ CREATE TABLE IF NOT EXISTS `groups` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `groups_group_name_unique` (`group_name`),
+  KEY `groups_branch_id_foreign` (`branch_id`),
   KEY `groups_shift_id_foreign` (`shift_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `groups`
 --
 
-INSERT INTO `groups` (`id`, `group_name`, `description`, `shift_id`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
-(1, 'g1', 'Description', 21, 1, 15, 15, '2025-09-15 23:20:46', '2025-09-15 23:20:46'),
-(2, 'g2', 'g2 \ng2\nDescription', 21, 1, 10, NULL, '2025-09-24 23:27:13', '2025-09-24 23:27:13'),
-(3, 'g3', 'g3 description', 23, 1, 15, 15, '2025-09-24 23:29:43', '2025-09-24 23:29:43'),
-(4, 'g4', 'g4 description', 24, 1, NULL, 15, '2025-09-24 23:30:16', '2025-09-24 23:30:16');
+INSERT INTO `groups` (`id`, `group_name`, `description`, `branch_id`, `shift_id`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
+(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 8, 1, 1, 10, 15, '2025-10-12 15:32:10', '2025-10-12 15:32:10');
 
 -- --------------------------------------------------------
 
@@ -568,7 +563,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `migration` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=74 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `migrations`
@@ -582,14 +577,14 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (64, '2025_09_03_113209_create_branches_table', 30),
 (42, '2025_07_09_193053_work_days', 23),
 (47, '2025_07_10_110008_employeesOld', 25),
-(12, '2025_07_09_195112_groups', 4),
+(74, '2025_07_09_195112_groups', 36),
 (13, '2025_07_13_085205_work_day_group', 5),
 (24, '2025_07_16_060939_special_working_days', 12),
 (25, '2025_07_16_063955_create_group_special_workdays_table', 13),
 (38, '2025_07_22_053601_create_check_in_outs_table', 21),
 (32, '2025_07_20_042610_create_db_location_settings_table', 17),
 (33, '2025_07_20_101539_create_attendance_statuses_table', 18),
-(36, '2025_07_09_194434_employee_group', 20),
+(75, '2025_07_09_194434_employee_group', 37),
 (41, '2025_07_22_112036_create_holidays_table', 22),
 (67, '2023_09_21_142101_create_districts_table', 32),
 (66, '2023_09_21_142029_create_divisions_table', 32),
@@ -681,11 +676,11 @@ CREATE TABLE IF NOT EXISTS `shift_settings` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `uid` bigint NOT NULL,
   `branch_code` bigint DEFAULT NULL,
-  `shift_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `shift_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `start_time` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `end_time` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `description` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `shift_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `shift_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `start_time` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `end_time` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `description` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `eiin` bigint DEFAULT NULL,
   `status` tinyint DEFAULT '1',
   `created_at` timestamp NULL DEFAULT NULL,
@@ -745,69 +740,69 @@ CREATE TABLE IF NOT EXISTS `students` (
   `eiin` bigint DEFAULT NULL,
   `attached_eiin` int DEFAULT NULL,
   `suid` bigint DEFAULT NULL,
-  `student_unique_id` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `student_unique_id` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `uid` bigint NOT NULL,
   `caid` bigint DEFAULT NULL,
   `type` tinyint DEFAULT NULL,
-  `incremental_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `student_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `student_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `brid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `incremental_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `student_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `student_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `brid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `reg_status` tinyint NOT NULL DEFAULT '0' COMMENT '0=pending,1=temp,2=registered',
   `scroll_num` bigint DEFAULT NULL,
-  `registration_year` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `religion` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `birth_place` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `gender` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `board_reg_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `nationality` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `recent_study_class` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `disability_status` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `blood_group` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `student_mobile_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `ethnic_info` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `branch` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `version` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `shift` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `class` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `section` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `group` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `roll` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `registration_year` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `religion` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `birth_place` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `gender` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `board_reg_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `nationality` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `recent_study_class` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `disability_status` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `blood_group` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `student_mobile_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `ethnic_info` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `version` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `shift` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `class` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `section` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `group` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `roll` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `is_regular` tinyint DEFAULT NULL,
-  `father_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `father_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `father_nid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `father_brid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `father_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `father_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `father_nid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `father_brid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `father_date_of_birth` date DEFAULT NULL,
-  `father_mobile_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mother_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mother_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mother_nid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mother_brid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `father_mobile_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mother_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mother_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mother_nid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mother_brid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `mother_date_of_birth` date DEFAULT NULL,
-  `mother_mobile_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `guardian_name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `guardian_name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `guardian_mobile_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `guardian_nid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `guardian_occupation` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `disability_types` text COLLATE utf8mb3_unicode_ci,
-  `disability_file` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `relation_with_guardian` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `present_address` text COLLATE utf8mb3_unicode_ci,
-  `permanent_address` text COLLATE utf8mb3_unicode_ci,
-  `post_office` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mother_mobile_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `guardian_name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `guardian_name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `guardian_mobile_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `guardian_nid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `guardian_occupation` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `disability_types` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `disability_file` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `relation_with_guardian` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `present_address` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `permanent_address` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `post_office` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `division_id` bigint DEFAULT NULL,
   `district_id` bigint DEFAULT NULL,
   `upazilla_id` bigint DEFAULT NULL,
-  `unions` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `image` text COLLATE utf8mb3_unicode_ci,
-  `br_file` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `role` varchar(30) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `unions` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `image` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `br_file` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `role` varchar(30) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `data_source` tinyint DEFAULT NULL,
-  `student_source` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `student_source` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `created_by` bigint DEFAULT NULL,
   `updated_by` bigint DEFAULT NULL,
   `deleted_by` bigint DEFAULT NULL,
@@ -833,47 +828,47 @@ CREATE TABLE IF NOT EXISTS `teachers` (
   `caid` bigint DEFAULT NULL,
   `uid` bigint NOT NULL,
   `pdsid` bigint DEFAULT NULL,
-  `index_number` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `index_number` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `type` tinyint DEFAULT NULL,
-  `incremental_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `name_en` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `name_bn` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `fathers_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mothers_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `email` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `mobile_no` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `gender` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `incremental_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `name_en` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `name_bn` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `fathers_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mothers_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `email` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `mobile_no` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `gender` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `date_of_birth` date DEFAULT NULL,
-  `institute_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `institute_type` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `institute_category` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `workstation_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `branch_institute_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `branch_institute_category` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `service_break_institute` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `designation` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `institute_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `institute_type` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `institute_category` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `workstation_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch_institute_name` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `branch_institute_category` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `service_break_institute` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `designation` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `designation_id` int DEFAULT NULL,
   `division_id` int DEFAULT NULL,
   `district_id` int DEFAULT NULL,
   `upazilla_id` int DEFAULT NULL,
   `is_foreign` tinyint NOT NULL DEFAULT '0' COMMENT '1=foreign,0=local',
-  `country` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `state` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `city` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `zip_code` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `country` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `state` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `city` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `zip_code` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `joining_year` int DEFAULT NULL,
   `mpo_code` int DEFAULT NULL,
   `joining_date` date DEFAULT NULL,
   `last_working_date` date DEFAULT NULL,
-  `nid` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `blood_group` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `emergency_contact` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
-  `image` text COLLATE utf8mb3_unicode_ci,
-  `role` varchar(30) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `nid` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `blood_group` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `emergency_contact` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `image` text CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci,
+  `role` varchar(30) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `ismpo` tinyint DEFAULT NULL,
   `isactive` tinyint DEFAULT NULL,
   `data_source` tinyint DEFAULT NULL,
-  `teacher_source` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
+  `teacher_source` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   `teacher_type` int DEFAULT NULL,
   `access_type` int DEFAULT NULL,
   `created_by` bigint DEFAULT NULL,
@@ -1528,34 +1523,15 @@ CREATE TABLE IF NOT EXISTS `work_day_group` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `work_day_group_group_id_work_day_id_unique` (`group_id`,`work_day_id`),
   KEY `work_day_group_work_day_id_foreign` (`work_day_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=115 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `work_day_group`
 --
 
 INSERT INTO `work_day_group` (`id`, `group_id`, `work_day_id`, `created_at`, `updated_at`) VALUES
-(75, 18, 2, NULL, NULL),
-(79, 19, 2, NULL, NULL),
-(6, 2, 2, NULL, NULL),
-(74, 18, 1, NULL, NULL),
-(78, 18, 5, NULL, NULL),
-(77, 18, 4, NULL, NULL),
-(76, 18, 3, NULL, NULL),
-(80, 20, 2, NULL, NULL),
-(81, 21, 2, NULL, NULL),
-(82, 22, 3, NULL, NULL),
-(83, 23, 2, NULL, NULL),
-(85, 1, 2, NULL, NULL),
-(112, 3, 24, NULL, NULL),
-(91, 3, 2, NULL, NULL),
-(111, 3, 21, NULL, NULL),
-(114, 4, 22, NULL, NULL),
-(113, 4, 24, NULL, NULL),
-(100, 1, 3, NULL, NULL),
-(109, 2, 1, NULL, NULL),
-(110, 2, 21, NULL, NULL),
-(105, 1, 1, NULL, NULL);
+(1, 1, 1, NULL, NULL),
+(2, 1, 2, NULL, NULL);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

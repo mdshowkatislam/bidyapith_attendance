@@ -48,8 +48,9 @@ class GroupController extends Controller
         // ])->get();
 
 
+
         $groups = Group::all();
- Log::info('yy');
+
         if ($groups->isEmpty()) {
             return $this->apisuccessResponse('No groups found.', 404);
         }
@@ -64,7 +65,7 @@ class GroupController extends Controller
             ->get();
 
         $shifts = collect();
-     
+
         $workDays = WorkDay::select('id', 'day_name')->get();
         $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id')->get();
 
@@ -89,8 +90,8 @@ class GroupController extends Controller
         // exit();
 
         $group = Group::where('status', 1)->find($id);
-       $result =new GroupResource($group);
-     
+        $result = new GroupResource($group);
+
 
         if (!$group) {
             return $this->apisuccessResponse('Group not found.', 404);
@@ -101,31 +102,24 @@ class GroupController extends Controller
 
     public function store(Request $request)
     {
+      
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name',
             'description' => 'nullable|string',
-            'branch_code' => 'required|integer|exists:branches,branch_code',
-            'shift_id' => [
-                'required',
-                'integer',
-                Rule::exists('shift_settings', 'id')->where(function ($query) use ($request) {
-                    $query->where('branch_code', $request->branch_code);
-                })
-            ],
+            'branch_id' => 'required|integer',
+            'shift_id' => 'required|integer', // from external API
             'status' => 'nullable|in:0,1',
             'flexible_in_time' => 'nullable|integer|between:1,59',
             'flexible_out_time' => 'nullable|integer|between:1,59',
             'work_day_ids' => 'nullable|array',
-            'work_day_ids.*' => 'exists:work_days,id',
-            'employee_ids' => 'nullable|array',
-            'employee_ids.*' => 'exists:employees,id',
+            'work_day_ids.*' => 'integer|exists:work_days,id',
+            'employee_emp_ids' => 'nullable|array',
+            'employee_emp_ids.*' => 'integer', // from external API
         ], [
-            'group_name.required' => 'Group name required',
+            'group_name.required' => 'Group name is required',
             'group_name.unique' => 'This group name is already taken.',
-            'branch_code.required' => 'Branch selection required',
-            'branch_code.exists' => 'Selected branch does not exist',
+            'branch_id.required' => 'Branch is required',
             'shift_id.required' => 'Shift selection required',
-            'shift_id.exists' => 'Selected shift does not exist for this branch',
         ]);
 
         if ($validator->fails()) {
@@ -133,158 +127,146 @@ class GroupController extends Controller
         }
 
         try {
+            // convert to int if provided
             $flexInTime = $request->filled('flexible_in_time') ? (int) $request->flexible_in_time : null;
             $flexOutTime = $request->filled('flexible_out_time') ? (int) $request->flexible_out_time : null;
 
-            // Create the group (NO branch_code stored in groups table)
+            // Create the group
             $group = Group::create([
                 'group_name' => $request->group_name,
                 'description' => $request->description,
+                'branch_id' => $request->branch_id,
                 'shift_id' => $request->shift_id,
                 'status' => $request->status ?? 1,
                 'flexible_in_time' => $flexInTime,
                 'flexible_out_time' => $flexOutTime,
             ]);
 
-            // Attach to pivot tables (use sync instead of attach to handle updates)
+            // Pivot relationships
             if (!empty($request->work_day_ids)) {
                 $group->workDays()->sync($request->work_day_ids);
-            }
 
-            if (!empty($request->employee_ids)) {
-                $group->employees()->sync($request->employee_ids);
+            }
+            // Employees come from external API — store just IDs in pivot
+            if (!empty($request->employee_emp_ids)) {
+                $group->employees()->sync($request->employee_emp_ids); 
             }
 
             return $this->apisuccessResponse('Group created successfully.', $group, 201);
         } catch (\Exception $e) {
-            return $this->apierrorResponse(new \Exception('Error creating group: ' . $e->getMessage()), 'Error creating group', 500);
+            return $this->apierrorResponse(
+                new \Exception('Error creating group: ' . $e->getMessage()),
+                'Error creating group',
+                500
+            );
         }
     }
+
 
     public function edit($id)
-    {
-        $group = Group::select(['id', 'group_name', 'description', 'shift_id', 'status', 'flexible_in_time', 'flexible_out_time'])
-            ->with([
-                'employees:id,name,profile_id,mobile_number,joining_date,present_address,picture,division_id,department_id,section_id,company_id',
-                'workDays:id,day_name',
-                'shift:id,shift_name_en,branch_code',
-                'shift.branch:id,branch_code,branch_name_en',  // Add branch relationship
-                'employees.division:id,name',
-                'employees.department:id,name',
-                'employees.section:id,name'
-            ])
-            ->findOrFail($id);
+{
+    $group = Group::select([
+            'id',
+            'group_name',
+            'description',
+            'branch_id',
+            'shift_id',
+            'status',
+            'flexible_in_time',
+            'flexible_out_time'
+        ])
+        ->with([
+            'employees:id,name_en,profile_id,image', // local fallback — or empty if external
+            'workDays:id,day_name'
+        ])
+        ->findOrFail($id);
 
-        foreach ($group->employees as $item) {
-            $item->setRelation('pivot', false);
-            $item->makeHidden(['division_id', 'department_id', 'section_id']);
-        };
-
-        foreach ($group->workDays as $item) {
-            $item->setRelation('pivot', false);
-        };
-
-        $workDays = WorkDay::select(['id', 'day_name'])->get();
-
-        // Get all branches for selection
-        $branches = Branch::where('rec_status', 1)
-            ->select('branch_code', 'branch_name_en')
-            ->get();
-
-        // Get shifts for the current group's branch
-        $shifts = ShiftSetting::where('branch_code', $group->shift->branch_code ?? null)
-            ->select('id', 'shift_name_en')
-            ->get();
-
-        $employees = Employee::whereDoesntHave('groups')
-            ->orWhereHas('groups', function ($q) use ($id) {
-                $q->where('groups.id', $id);
-            })
-            ->select(['id', 'profile_id', 'name'])
-            ->get();
-        return $this->apisuccessResponse('Data fetched successfully.', [
-            'group' => $group,
-            'branches' => $branches,
-            'shifts' => $shifts,
-            'workDays' => $workDays,
-            'employees' => $employees,
-        ]);
+    // Remove pivot relations for cleaner JSON
+    foreach ($group->employees as $item) {
+        $item->setRelation('pivot', false);
     }
+    foreach ($group->workDays as $item) {
+        $item->setRelation('pivot', false);
+    }
+
+    // Local workdays for dropdown
+    $workDays = WorkDay::select(['id', 'day_name'])->get();
+
+    return $this->apisuccessResponse('Data fetched successfully.', [
+        'group' => $group,
+        'workDays' => $workDays,
+        // The frontend should call external APIs for these:
+        'branches' => [],
+        'shifts' => [],
+        'employees' => []
+    ]);
+}
+
 
     public function update($id, Request $request)
-    {
-        $group = Group::findOrFail($id);
-        $validator = Validator::make($request->all(), [
-            'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
-            'description' => 'nullable|string',
-            'branch_code' => 'required|integer|exists:branches,branch_code',
-            'shift_id' => [
-                'required',
-                'integer',
-                Rule::exists('shift_settings', 'id')->where(function ($query) use ($request) {
-                    $query->where('branch_code', $request->branch_code);
-                })
-            ],
-            'status' => 'nullable|in:0,1',
-            'flexible_in_time' => 'nullable|integer|between:1,59',
-            'flexible_out_time' => 'nullable|integer|between:1,59',
-            'work_day_ids' => 'nullable|array',
-            'work_day_ids.*' => 'exists:work_days,id',
-            'employee_ids' => 'nullable|array',
-            'employee_ids.*' => 'exists:employees,id',
-        ], [
-            'group_name.required' => 'Group name required',
-            'group_name.unique' => 'This group name is already taken.',
-            'branch_code.required' => 'Branch selection required',
-            'branch_code.exists' => 'Selected branch does not exist',
-            'shift_id.required' => 'Shift selection required',
-            'shift_id.exists' => 'Selected shift does not exist for this branch',
+{
+    $group = Group::findOrFail($id);
+
+    $validator = Validator::make($request->all(), [
+        'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
+        'description' => 'nullable|string',
+        'branch_id' => 'required|integer',
+        'shift_id' => 'required|integer', // external API
+        'status' => 'nullable|in:0,1',
+        'flexible_in_time' => 'nullable|integer|between:1,59',
+        'flexible_out_time' => 'nullable|integer|between:1,59',
+        'work_day_ids' => 'nullable|array',
+        'work_day_ids.*' => 'exists:work_days,id',
+        'employee_emp_ids' => 'nullable|array',
+        'employee_emp_ids.*' => 'integer', // external API
+    ], [
+        'group_name.required' => 'Group name is required',
+        'group_name.unique' => 'This group name is already taken.',
+        'branch_id.required' => 'Branch is required',
+        'shift_id.required' => 'Shift selection required',
+    ]);
+
+    if ($validator->fails()) {
+        return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
+    }
+
+    try {
+        $group->update([
+            'group_name' => $request->group_name,
+            'description' => $request->description,
+            'branch_id' => $request->branch_id,
+            'shift_id' => $request->shift_id,
+            'status' => $request->status ?? 1,
+            'flexible_in_time' => $request->flexible_in_time,
+            'flexible_out_time' => $request->flexible_out_time,
         ]);
 
-        if ($validator->fails()) {
-            return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
-        }
+        $group->workDays()->sync($request->work_day_ids ?? []);
+        $group->employees()->sync($request->employee_emp_ids ?? []);
 
-        try {
-            $flexInTime = $request->filled('flexible_in_time') ? (int) $request->flexible_in_time : null;
-            $flexOutTime = $request->filled('flexible_out_time') ? (int) $request->flexible_out_time : null;
-
-            // Update the group (NO branch_code stored in groups table)
-            $group->update([
-                'group_name' => $request->group_name,
-                'description' => $request->description,
-                'shift_id' => $request->shift_id,
-                'status' => $request->status ?? 1,
-                'flexible_in_time' => $flexInTime,
-                'flexible_out_time' => $flexOutTime,
-            ]);
-
-            // Sync relationships
-            $group->workDays()->sync($request->work_day_ids ?? []);
-            $group->employees()->sync($request->employee_ids ?? []);
-
-            return $this->apisuccessResponse('Group updated successfully.', null, 200);
-        } catch (\Exception $e) {
-            return $this->apierrorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
-        }
+        return $this->apisuccessResponse('Group updated successfully.', $group, 200);
+    } catch (\Exception $e) {
+        return $this->apierrorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
     }
+}
 
-    public function destroy(Group $group)
-    {
-        try {
-            $group->employees()->detach();
-            $group->workDays()->detach();
-            $deleted = $group->delete();
 
-            if (!$deleted) {
-                return $this->apierrorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
-            } else {
-                return $this->apisuccessResponse('Group deleted successfully.', null, 200);
-            }
-        } catch (\Exception $e) {
-            return $this->apierrorResponse(new \Exception('Exception Something went wrong.'), 'Group deletion error', 500);
+   public function destroy(Group $group)
+{
+    try {
+        $group->employees()->detach();
+        $group->workDays()->detach();
+
+        if (!$group->delete()) {
+            return $this->apierrorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
         }
+
+        return $this->apisuccessResponse('Group deleted successfully.', null, 200);
+    } catch (\Exception $e) {
+        return $this->apierrorResponse(new \Exception('Error deleting group: ' . $e->getMessage()), 'Group deletion error', 500);
     }
+}
+
 
     public function toggleStatus($id)
     {
@@ -298,61 +280,61 @@ class GroupController extends Controller
             'badge_class' => $group->status === 1 ? 'bg-success' : 'bg-secondary'
         ]);
     }
-  //For defalt Paper Size view
-// public function downloadPdf($id)
-// {
-//     try {
-//         $data = Group::where('status', 1)->find($id);
-       
-//         if (!$data) {
-//             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-//         }
+    //For defalt Paper Size view
+    // public function downloadPdf($id)
+    // {
+    //     try {
+    //         $data = Group::where('status', 1)->find($id);
 
-//         $group = new GroupResource($data);
+    //         if (!$data) {
+    //             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
+    //         }
 
-//         // Configure PDF settings
-//         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
-//                   ->setPaper('a4', 'landscape') // or 'portrait' depending on your content
-//                   ->setOption('dpi', 150)
-//                   ->setOption('margin-top', 10)
-//                   ->setOption('margin-right', 10)
-//                   ->setOption('margin-bottom', 10)
-//                   ->setOption('margin-left', 10);
+    //         $group = new GroupResource($data);
 
-//         // Return the PDF as a download response
-//         return $pdf->download('group-details-' . $id . '.pdf');
-//     } catch (\Exception $e) {
-//         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
-//     }
-// }
+    //         // Configure PDF settings
+    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+    //                   ->setPaper('a4', 'landscape') // or 'portrait' depending on your content
+    //                   ->setOption('dpi', 150)
+    //                   ->setOption('margin-top', 10)
+    //                   ->setOption('margin-right', 10)
+    //                   ->setOption('margin-bottom', 10)
+    //                   ->setOption('margin-left', 10);
+
+    //         // Return the PDF as a download response
+    //         return $pdf->download('group-details-' . $id . '.pdf');
+    //     } catch (\Exception $e) {
+    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+    //     }
+    // }
 
 
-//For Custom Paper Size with Specific Dimensions
-public function downloadPdf($id)
-{
-    try {
-        $data = Group::where('status', 1)->find($id);
-       
-        if (!$data) {
-            return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
+    //For Custom Paper Size with Specific Dimensions
+    public function downloadPdf($id)
+    {
+        try {
+            $data = Group::where('status', 1)->find($id);
+
+            if (!$data) {
+                return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
+            }
+
+            $group = new GroupResource($data);
+            Log::info(json_encode($group->toArray(request()), JSON_PRETTY_PRINT));
+
+            // Custom paper size (width, height) in millimeters
+            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+                ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
+                ->setOption('dpi', 96)
+                ->setOption('defaultFont', 'Arial')
+                ->setOption('isHtml5ParserEnabled', true);
+            //   return $pdf->stream('group-details.pdf');
+
+            return $pdf->download('group-details-' . $id . '.pdf');
+        } catch (\Exception $e) {
+            return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
         }
-
-        $group = new GroupResource($data);
-        Log::info(json_encode($group->toArray(request()),JSON_PRETTY_PRINT));
-
-        // Custom paper size (width, height) in millimeters
-        $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
-                  ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
-                  ->setOption('dpi', 96)
-                  ->setOption('defaultFont', 'Arial')
-                  ->setOption('isHtml5ParserEnabled', true);
-        //   return $pdf->stream('group-details.pdf');
-
-        return $pdf->download('group-details-' . $id . '.pdf');
-    } catch (\Exception $e) {
-        return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
     }
-}
 
     // public function downloadPdf($id)
     // {

@@ -43,8 +43,8 @@ class Employee extends Model
         return $this->belongsTo(Division::class);
     }
 
-    public function groups()
-    {
-        return $this->belongsToMany(Group::class, 'employee_group', 'employee_id', 'group_id');
-    }
+   public function groups()
+{
+    return $this->belongsToMany(Group::class, 'employee_group', 'employee_emp_id', 'group_id', 'profile_id', 'id');
+}
 }

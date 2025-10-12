@@ -15,7 +15,7 @@ class BaseGroupController extends Controller
     public function index()
     {;
         try {
-           
+           \Log::info("fuck");
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
                 'accept' => 'application/json',
@@ -24,7 +24,7 @@ class BaseGroupController extends Controller
                 ->withOptions(['verify' => false])
                 ->get('http://attendance2.localhost.com/api/group_manage/list');
 
-                // dd($response->json());
+                dd($response->json());
             if ($response->successful()) {
                 $data = $response->json();
 

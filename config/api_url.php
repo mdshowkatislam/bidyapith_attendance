@@ -1,5 +1,10 @@
 <?php 
 return [
-    "endpoint" =>env('API_ENDPOINT', 'please provide api endpoint correctly'),    
-    // "endpoint" =>env('API_ENDPOINT', 'http://self-master.bidyapith.com/api/v3/attendance-store-machine'),    
+    "endpoint" =>env('API_ENDPOINT', 'please provide base api url correctly'),   // this for attendance machine data pick.
+     "baseUrl_1" =>env('BIDYAPITH_MASTER_URL', 'please provide base api url correctly'), 
+     "baseUrl_2" =>env('BIDYAPITH_ACCOUNT_URL', 'please provide base api url correctly'), 
+
+
+
 ];
+

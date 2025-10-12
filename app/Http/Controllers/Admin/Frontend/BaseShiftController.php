@@ -24,6 +24,7 @@ class BaseShiftController extends Controller
                 ->get('http://attendance2.localhost.com/api/shift_manage/list');
 
             if (!$response->successful()) {
+                \Log::error('xx');
                 \Log::error('API Request Failed', ['status' => $response->status(), 'body' => $response->body()]);
                 throw new \Exception('API request failed with status: ' . $response->status());
             }

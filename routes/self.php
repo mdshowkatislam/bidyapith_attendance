@@ -49,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
     // ✅ Work Day MANAGEMENT
     Route::prefix('work_day')->group(function () {
-        Route::get('/', [BaseWorkdayController::class, 'index'])->name('work_day.create');
+        Route::get('/', [BaseWorkdayController::class, 'index'])->name('work_day.list');
         Route::get('/create', function () {
             return view('admin.frontend.work_day.form');
         })->name('work_day.create');

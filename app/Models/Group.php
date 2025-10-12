@@ -2,48 +2,62 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee;
 use App\Models\FlexibleTimeGroup;
-use App\Models\ShiftSetting;
 use App\Models\SpecialWorkingday;
 use App\Models\WorkDay;
-use App\Models\Branch; // Add this import
-use Illuminate\Database\Eloquent\Model;
+use App\Services\ExternalDataService;
 
 class Group extends Model
 {
     protected $table = 'groups';
-    protected $fillable = ['group_name', 'description', 'shift_id', 'status','flexible_in_time','flexible_out_time'];
 
-    // Relationships
+    protected $fillable = [
+        'group_name',
+        'description',
+        'branch_id',
+        'shift_id',
+        'status',
+        'flexible_in_time',
+        'flexible_out_time'
+    ];
 
-    public function employees()
-    {
-        return $this->belongsToMany(Employee::class, 'employee_group', 'group_id', 'employee_id', 'id', 'id');
-    }
+    /**
+     * Automatically append external API data to model JSON.
+     */
+    protected $appends = ['branch_data', 'shift_data'];
+
+    /**
+     * ✅ Fetch branch data via external API (from config/api_url.php)
+     */
+
+
+public function getBranchDataAttribute()
+{
+    $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
+    return ExternalDataService::fetchBranchDetails($baseUrl, $this->branch_id);
+}
+
+public function getShiftDataAttribute()
+{
+    $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
+    return ExternalDataService::fetchShiftDetails($baseUrl, $this->shift_id);
+}
+
+    /**
+     * ✅ Relationships (only relevant ones kept)
+     */
+
+  public function employees()
+{
+    return $this->belongsToMany(Employee::class, 'employee_group', 'group_id', 'employee_emp_id', 'id', 'profile_id');
+}
 
     public function workDays()
     {
         return $this->belongsToMany(WorkDay::class, 'work_day_group');
     }
-
-    public function shift()
-    {
-        return $this->belongsTo(ShiftSetting::class, 'shift_id');
-    }
-    
-    // Add branch relationship through shift
-  public function branch()
-{
-    return $this->hasOneThrough(
-        Branch::class,          // Final model we want to access
-        ShiftSetting::class,    // Intermediate model
-        'id',                   // Foreign key on the ShiftSetting table (references Group's shift_id)
-        'branch_code',          // Foreign key on the Branch table (references ShiftSetting's branch_code)
-        'shift_id',             // Local key on the Group table
-        'branch_code'           // Local key on the ShiftSetting table
-    );
-}
 
     public function flexibleTime()
     {
@@ -55,27 +69,29 @@ class Group extends Model
         return $this->belongsToMany(SpecialWorkingday::class, 'group_special_workdays');
     }
 
-    // Accessor for readable status
+    /**
+     * ✅ Accessors
+     */
+
     public function getStatusTextAttribute()
     {
         return $this->status ? 'Active' : 'Inactive';
     }
 
-    // Accessor for workday names as string
+    // Workday names (local relationship)
     public function getWorkdayNamesAttribute()
     {
         return $this->workDays->pluck('name')->implode(', ');
     }
 
-    // Accessor for shift name
+    // ✅ Use external data for display-friendly names
     public function getShiftNameAttribute()
     {
-        return optional($this->shift)->shift_name_en ?? 'N/A';
+        return $this->shift_data['shift_name_en'] ?? 'N/A';
     }
 
-    // Accessor for branch name
     public function getBranchNameAttribute()
     {
-        return optional($this->branch)->branch_name_en ?? 'N/A';
+        return $this->branch_data['branch_name_en'] ?? 'N/A';
     }
 }

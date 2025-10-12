@@ -4,11 +4,46 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class GroupResource extends JsonResource
 {
     public function toArray($request)
     {
+       
+
+        $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
+
+        // ✅ Fetch branch and shift data from external API
+        $branchData = $this->branch_id ? $this->fetchBranchDetails($baseUrl, $this->branch_id) : null;
+        $shiftData  = $this->shift_id ? $this->fetchShiftDetails($baseUrl, $this->shift_id) : null;
+
+       
+
+        // ✅ Map through all related employees
+        $employees = $this->employees->map(function ($employee) use ($baseUrl) {
+            $personType = $employee->person_type;
+            $profileId = $employee->profile_id;
+
+            // Fetch details from external API
+            $employeeData = $this->fetchEmployeeDetails($baseUrl, $personType, $profileId);
+
+            return [
+                'id' => $employee->id,
+                'profile_id' => $profileId,
+                'person_type' => $personType,
+                'name' => $employeeData['name'] ?? null,
+                'mobile_number' => $employeeData['mobile_number'] ?? null,
+                'present_address' => $employeeData['present_address'] ?? null,
+                'picture' => $employeeData['picture'] ?? null,
+                'division' => $employeeData['division'] ?? null,
+                'district' => $employeeData['district'] ?? null,
+                'upazila' => $employeeData['upazila'] ?? null,
+                'extra_data' => $employeeData ?? null,
+            ];
+        });
+
+        // ✅ Final API response format
         return [
             'id' => $this->id,
             'group_name' => $this->group_name,
@@ -16,100 +51,129 @@ class GroupResource extends JsonResource
             'status' => $this->status,
             'flexible_in_time' => $this->flexible_in_time,
             'flexible_out_time' => $this->flexible_out_time,
-            'shift' => $this->shift ? [
-                'id' => $this->shift->id,
-                'shift_name_en' => $this->shift->shift_name_en,
-                'branch' => $this->shift->branch ? [
-                    'branch_code' => $this->shift->branch->branch_code,
-                    'branch_name_en' => $this->shift->branch->branch_name_en
-                ] : null
+
+            // ✅ External API branch info
+            'branch' => $branchData ? [
+                'id' => $branchData['id'] ?? null,
+                'branch_code' => $branchData['branch_code'] ?? null,
+                'branch_name_en' => $branchData['branch_name_en'] ?? null,
+                'branch_name_bn' => $branchData['branch_name_bn'] ?? null,
             ] : null,
 
-            'branch' => $this->branch ? [
-                'id' => $this->branch->id,
-                'branch_code' => $this->branch->branch_code,
-                'branch_name_en' => $this->branch->branch_name_en,
-                'branch_name_bn' => $this->branch->branch_name_bn,
+            // ✅ External API shift info
+            'shift' => $shiftData ? [
+                'id' => $shiftData['id'] ?? null,
+                'shift_name_en' => $shiftData['shift_name_en'] ?? null,
+                'shift_name_bn' => $shiftData['shift_name_bn'] ?? null,
+                'branch' => $shiftData['branch'] ?? null,
             ] : null,
 
+            // ✅ Local work days
             'work_days' => $this->workDays->map(function ($workDay) {
                 return [
                     'id' => $workDay->id,
-                    'day_name' => $workDay->day_name
+                    'day_name' => $workDay->day_name,
                 ];
             }),
 
-            // ✅ Employees  fetched dynamically
-            'employees' => $this->employees->map(function ($employee) {
-                $personType = $employee->person_type;
-                $profileId = $employee->profile_id;
+            // ✅ Mapped employee details
+            'employees' => $employees,
 
-                $employeeData = $this->fetchEmployeeDetails($personType, $profileId);
-
-                return [
-                    'id' => $employee->id,
-                    'profile_id' => $profileId,
-                    'person_type' => $personType,
-                    // Merge dynamic data from external service
-                    'name' => $employeeData['name'] ?? null,
-                    'mobile_number' => $employeeData['mobile_number'] ?? null,
-                    'present_address' => $employeeData['present_address'] ?? null,
-                    'picture' => $employeeData['picture'] ?? null,
-                    'division' => $employeeData['division'] ?? null,
-                    'district' => $employeeData['district'] ?? null,
-                    'upazila' => $employeeData['upazila'] ?? null,
-                    'extra_data' => $employeeData ?? null, // Optional: keep full response
-                ];
-            }),
-
+            'employee_count' => $this->employees->count(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'employee_count' => $this->employees->count(),
         ];
     }
 
-    /**
-     * Fetch employee details from external service based on person_type
-     */
-    private function fetchEmployeeDetails($personType, $profileId)
+    // 🔹 Fetch Employee Details
+    private function fetchEmployeeDetails($baseUrl, $personType, $profileId)
     {
-        \Log::info('xxx');
-        // External service base URL
-        $baseUrl = 'http://local-master.bidyapith.com/api/v3';
+        Log::info('Fetching employee details', [
+            'baseUrl' => $baseUrl,
+            'personType' => $personType,
+            'profileId' => $profileId,
+        ]);
 
-        switch ($personType) {
-            case 1: // Teacher
-                $url = "{$baseUrl}/teachers/{$profileId}";
-                break;
+      $endpoint = match ($personType) {
+    1 => 'teachers',
+    2 => 'staffs',
+    3 => 'students',
+    default => null,
+};
 
-            case 2: // Staff
-                $url = "{$baseUrl}/staff/{$profileId}";
-                break;
-
-            case 3: // Student
-                $url = "{$baseUrl}/students/{$profileId}";
-                break;
-
-            default:
-                return [];
+if ($endpoint) {
+    $url = "{$baseUrl}/api/v3/{$endpoint}/{$profileId}"; // ✅ correct full URL
+    try {
+        $response = Http::timeout(5)->get($url);
+        if ($response->successful()) {
+            $extraData = $response->json('data') ?? [];
+        } else {
+            Log::warning('Employee API failed', [
+                'url' => $url,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
         }
+    } catch (\Throwable $e) {
+        Log::error('Employee API exception', ['url' => $url, 'error' => $e->getMessage()]);
+    }
+}
+
 
         try {
-            $response = Http::timeout(5)->get($url);
-
+            $response = Http::timeout(6)->get($url);
+\Log::info('xx');
             if ($response->successful()) {
-                return $response->json()['data'] ?? [];
-            } else {
-                \Log::warning("Failed to fetch employee details", [
-                    'url' => $url,
-                    'status' => $response->status(),
-                    'body' => $response->body()
-                ]);
+                $json = $response->json();
+                return $json['data'] ?? $json;
             }
+
+            Log::warning('Employee API failed', [
+                'url' => $url,
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
         } catch (\Throwable $e) {
-            \Log::error("Error fetching employee details: ".$e->getMessage());
+            Log::error('Employee API exception', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
         }
 
         return [];
+    }
+
+    // 🔹 Fetch Branch Details
+    private function fetchBranchDetails($baseUrl, $branchId)
+    {
+        $url = "{$baseUrl}/branch-list";
+        try {
+            $response = Http::timeout(6)->get($url);
+            if ($response->successful()) {
+                $branches = $response->json()['data'] ?? [];
+                return collect($branches)->firstWhere('id', $branchId);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error fetching branch', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return null;
+    }
+
+    // 🔹 Fetch Shift Details
+    private function fetchShiftDetails($baseUrl, $shiftId)
+    {
+        $url = "{$baseUrl}/shift-list";
+        try {
+            $response = Http::timeout(6)->get($url);
+            if ($response->successful()) {
+                $shifts = $response->json()['data'] ?? [];
+                return collect($shifts)->firstWhere('id', $shiftId);
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error fetching shift', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return null;
     }
 }

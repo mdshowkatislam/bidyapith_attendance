@@ -8,7 +8,7 @@ use App\Http\Controllers\Admin\UpazilaController;
 use Illuminate\Support\Facades\Route;
 // use Illuminate\Support\Facades\Log;
 
-// Route::get('/test-log', function () {
+// Route::get('/log', function () {
 //     Log::debug('This is a debug log test');
 //     return 'Log written!';
 // });

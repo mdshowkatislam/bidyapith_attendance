@@ -272,13 +272,17 @@ class GroupController extends Controller
 
     private function fetchBranchesList($baseUrl)
     {
-        $url = "{$baseUrl}/api/v3/branch-list";
+        $eiin = 134172; // ✅ static for testing
+        $url = "{$baseUrl}/api/v3/branch-list?eiin={$eiin}";
         Log::info("Fetching branches list from URL: {$url}");
 
         try {
             $response = Http::timeout(6)->get($url);
+            Log::info('Branches API Raw', ['body' => $response->json()]);
             if ($response->successful()) {
-                return $response->json('data') ?? [];
+                $data = $response->json('data') ?? [];
+                Log::info('Branch API Response Count: ' . count($data));
+                return is_array($data) ? $data : [];
             }
         } catch (\Throwable $e) {
             Log::error('Error fetching branches list', ['url' => $url, 'error' => $e->getMessage()]);
@@ -289,13 +293,17 @@ class GroupController extends Controller
 
     private function fetchShiftsList($baseUrl)
     {
-        $url = "{$baseUrl}/api/v3/shift-list";
+        $eiin = 134172; // ✅ static for testing
+        $url = "{$baseUrl}/api/v3/shift-list?eiin={$eiin}";
         Log::info("Fetching shifts list from URL: {$url}");
 
         try {
             $response = Http::timeout(6)->get($url);
+            Log::info('Shift API Raw', ['body' => $response->json()]);
             if ($response->successful()) {
-                return $response->json('data') ?? [];
+                $data = $response->json('data') ?? [];
+                Log::info('Shifts API Response Count: ' . count($data));
+                return is_array($data) ? $data : [];
             }
         } catch (\Throwable $e) {
             Log::error('Error fetching shifts list', ['url' => $url, 'error' => $e->getMessage()]);

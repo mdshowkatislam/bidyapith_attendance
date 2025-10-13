@@ -30,7 +30,7 @@ use Illuminate\Support\Facades\Route;
 
 // Route::middleware('auth:sanctum')->group(function () {
 
-// ✅ Authenticated user info
+// 🧩 Authenticated user info
 Route::get('/user', function (Request $request) {
     return $request->user();
 });
@@ -240,4 +240,5 @@ Route::prefix('employee_manage')->group(function () {
     Route::put('/update/{id}', [EmployeeApiController::class, 'update'])->name('api.employee.update');
     Route::delete('/delete/{id}', [EmployeeApiController::class, 'destroy'])->name('api.employee.destroy');
 });
+
 

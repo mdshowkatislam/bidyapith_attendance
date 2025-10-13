@@ -294,8 +294,8 @@ class GroupController extends Controller
     private function fetchShiftsList($baseUrl)
     {
         $eiin = 134172; // ✅ static for testing
-        $url = "{$baseUrl}/api/v3/shift-list?eiin={$eiin}";
-        Log::info("Fetching shifts list from URL: {$url}");
+        $url = "{$baseUrl}/api/v3/test/shift-list?eiin={$eiin}";
+        Log::info("zzz: {$url}");
 
         try {
             $response = Http::timeout(6)->get($url);
@@ -317,7 +317,6 @@ class GroupController extends Controller
     public function update($id, Request $request)
     {
         $group = Group::findOrFail($id);
-
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
             'description' => 'nullable|string',
@@ -391,7 +390,7 @@ class GroupController extends Controller
             'badge_class' => $group->status === 1 ? 'bg-success' : 'bg-secondary'
         ]);
     }
-    //For defalt Paper Size view
+    // ✅  For defalt Paper Size view ✅ 
     // public function downloadPdf($id)
     // {
     //     try {
@@ -420,32 +419,69 @@ class GroupController extends Controller
     // }
 
 
-    //For Custom Paper Size with Specific Dimensions
-    public function downloadPdf($id)
-    {
-        try {
-            $data = Group::where('status', 1)->find($id);
+    // 🧩 For Custom Paper Size with Specific Dimensions 🧩
+    // public function downloadPdf($id)
+    // {
+    //     Log::info('pp');
+    //     try {
+    //         $data = Group::where('status', 1)->find($id);
 
-            if (!$data) {
-                return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-            }
+    //         if (!$data) {
+    //             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
+    //         }
 
-            $group = new GroupResource($data);
-            Log::info(json_encode($group->toArray(request()), JSON_PRETTY_PRINT));
+    //         $group = new GroupResource($data);
+    //           Log::info('grouResouce data=');
+    //         Log::info(json_encode($group->toArray(request()), JSON_PRETTY_PRINT));
+    //          Log::info('data showing ended');
+    //         // Custom paper size (width, height) in millimeters
+    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+    //             ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
+    //             ->setOption('dpi', 96)
+    //             ->setOption('defaultFont', 'Arial')
+    //             ->setOption('isHtml5ParserEnabled', true);
+    //         //   return $pdf->stream('group-details.pdf');
+    //        Log::info('rr');
+    //         return $pdf->download('group-details-' . $id . '.pdf');
+    //     } catch (\Exception $e) {
+    //                    Log::info('cc');
+    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+    //     }
+    // }
 
-            // Custom paper size (width, height) in millimeters
-            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
-                ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
-                ->setOption('dpi', 96)
-                ->setOption('defaultFont', 'Arial')
-                ->setOption('isHtml5ParserEnabled', true);
-            //   return $pdf->stream('group-details.pdf');
+   public function downloadPdf($id)
+{
+    Log::info('pp');
+    try {
+        $data = Group::where('status', 1)->find($id);
 
-            return $pdf->download('group-details-' . $id . '.pdf');
-        } catch (\Exception $e) {
-            return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+        if (!$data) {
+            return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
         }
+
+        $groupResource = new GroupResource($data);
+        $groupArray = $groupResource->toArray(request());
+        
+        Log::info('Final data being passed to PDF:');
+        Log::info(json_encode($groupArray, JSON_PRETTY_PRINT));
+
+        // Pass as array instead of resource object
+        $pdf = PDF::loadView('admin.frontend.group.pdf', ['group' => $groupArray])
+            ->setPaper([0, 0, 1200, 1440], 'portrait')
+            ->setOption('dpi', 96)
+            ->setOption('defaultFont', 'Arial')
+            ->setOption('isHtml5ParserEnabled', true);
+            
+        Log::info('PDF generated successfully');
+        return $pdf->download('group-details-' . $id . '.pdf');
+    } catch (\Exception $e) {
+        Log::error('PDF Generation Error: ' . $e->getMessage());
+        Log::error('Trace: ' . $e->getTraceAsString());
+        return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
     }
+}
+
+
 
     // public function downloadPdf($id)
     // {

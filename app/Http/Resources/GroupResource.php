@@ -12,20 +12,37 @@ class GroupResource extends JsonResource
     {
         $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
 
+        Log::info('Fetching data for Group ID: ' . $this->id);
+        Log::info('Branch UID: ' . $this->branch_uid);
+        Log::info('Shift UID: ' . $this->shift_uid);
+
         // ✅ Fetch branch and shift data from external API
         $branchData = $this->branch_uid ? $this->fetchBranchDetails($baseUrl, $this->branch_uid) : null;
         $shiftData  = $this->shift_uid ? $this->fetchShiftDetails($baseUrl, $this->shift_uid) : null;
 
-        Log::info('Branch Data:', [$branchData]);
-        Log::info('Shift Data:', [$shiftData]);
+        Log::info('Branch Data Result: ' . json_encode($branchData));
+        Log::info('Shift Data Result: ' . json_encode($shiftData));
 
         // ✅ Map through all related employees
         $employees = $this->employees->map(function ($employee) use ($baseUrl) {
             $personType = $employee->person_type;
             $profileId = $employee->profile_id;
 
+            Log::info("Fetching employee data - Type: {$personType}, Profile ID: {$profileId}");
+
             // Fetch details from external API
             $employeeData = $this->fetchEmployeeDetails($baseUrl, $personType, $profileId);
+
+            Log::info("Employee Data for {$profileId}: " . json_encode($employeeData));
+
+            // Only fetch location names if we have employee data
+            if (!empty($employeeData)) {
+                $divisionName = isset($employeeData['division_id']) ? $this->fetchDivisionName($baseUrl, $employeeData['division_id']) : null;
+                $districtName = isset($employeeData['district_id']) ? $this->fetchDistrictName($baseUrl, $employeeData['district_id']) : null;
+                $upazilaName = isset($employeeData['upazilla_id']) ? $this->fetchUpazilaName($baseUrl, $employeeData['upazilla_id']) : null;
+            } else {
+                $divisionName = $districtName = $upazilaName = null;
+            }
 
             return [
                 'id' => $employee->id,
@@ -36,10 +53,9 @@ class GroupResource extends JsonResource
                 'mobile_number' => $employeeData['mobile_no'] ?? null,
                 'present_address' => $employeeData['address'] ?? null,
                 'picture' => $employeeData['image'] ?? null,
-                'division' => $employeeData['division_id'] ?? null,
-                'district' => $employeeData['district_id'] ?? null,
-                'upazila' => $employeeData['upazilla_id'] ?? null, // spelling is same as DB
-                // 'extra_data' => $employeeData ?? null,
+                'division' => $divisionName ?? ($employeeData['division_id'] ?? null),
+                'district' => $districtName ?? ($employeeData['district_id'] ?? null),
+                'upazila' => $upazilaName ?? ($employeeData['upazilla_id'] ?? null),
             ];
         });
 
@@ -55,7 +71,7 @@ class GroupResource extends JsonResource
             'branch' => $branchData ? [
                 'branch_uid' => $branchData['uid'] ?? null,
                 'branch_name_en' => $branchData['branch_name_en'] ?? null,
-                'branch_name_bn' => $branchData['branch_name'] ?? null, // here branch_name is okay ?
+                'branch_name_bn' => $branchData['branch_name'] ?? null,
                 'head_of_branch_id' => $branchData['head_of_branch_id'] ?? null,
             ] : null,
 
@@ -100,58 +116,144 @@ class GroupResource extends JsonResource
         Log::info("Fetching employee from URL: {$url}");
 
         try {
-            $response = Http::timeout(6)->get($url);
+            $response = Http::timeout(10)->get($url);
+            
             if ($response->successful()) {
-                return $response->json('data') ?? [];
+                $data = $response->json('data') ?? [];
+                Log::info("Employee API Success - Profile: {$profileId}", ['data' => $data]);
+                return $data;
+            } else {
+                Log::warning('Employee API failed', [
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
-
-            Log::warning('Employee API failed', [
-                'url' => $url,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
         } catch (\Throwable $e) {
-            Log::error('Employee API exception', ['url' => $url, 'error' => $e->getMessage()]);
+            Log::error('Employee API exception', [
+                'url' => $url, 
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return [];
     }
 
-    // 🔹 Fetch Branch Details (returns single branch object)
+    // 🔹 Fetch Branch Details
     private function fetchBranchDetails($baseUrl, $branchUid)
     {
         $url = "{$baseUrl}/api/v3/branch/{$branchUid}";
         Log::info("Fetching branch from URL: {$url}");
 
         try {
-            $response = Http::timeout(6)->get($url);
+            $response = Http::timeout(10)->get($url);
+            
             if ($response->successful()) {
                 $data = $response->json('data') ?? [];
+                Log::info("Branch API Success", ['data' => $data]);
                 return is_array($data) ? $data : [];
+            } else {
+                Log::warning('Branch API failed', [
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
         } catch (\Throwable $e) {
-            Log::error('Error fetching branch', ['url' => $url, 'error' => $e->getMessage()]);
+            Log::error('Error fetching branch', [
+                'url' => $url, 
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return null;
     }
 
-    // 🔹 Fetch Shift Details (returns single shift object)
+    // 🔹 Fetch Shift Details
     private function fetchShiftDetails($baseUrl, $shiftUid)
     {
         $url = "{$baseUrl}/api/v3/shift/{$shiftUid}";
         Log::info("Fetching shift from URL: {$url}");
 
         try {
-            $response = Http::timeout(6)->get($url);
+            $response = Http::timeout(10)->get($url);
+            
             if ($response->successful()) {
                 $data = $response->json('data') ?? [];
+                Log::info("Shift API Success", ['data' => $data]);
                 return is_array($data) ? $data : [];
+            } else {
+                Log::warning('Shift API failed', [
+                    'url' => $url,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
             }
         } catch (\Throwable $e) {
-            Log::error('Error fetching shift', ['url' => $url, 'error' => $e->getMessage()]);
+            Log::error('Error fetching shift', [
+                'url' => $url, 
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
 
         return null;
+    }
+
+    // 🔹 Fetch Division Name
+    private function fetchDivisionName($baseUrl, $divisionId)
+    {
+        $url = "{$baseUrl}/api/v3/division/{$divisionId}";
+           Log::error( $url );
+        try {
+            $response = Http::timeout(6)->get($url);
+            if ($response->successful()) {
+                $data = $response->json('data');
+                return $data['division_name_en'] ?? $data['division_name'] ?? $divisionId;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error fetching division', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return $divisionId;
+    }
+
+    // 🔹 Fetch District Name
+    private function fetchDistrictName($baseUrl, $districtId)
+    {
+         
+        $url = "{$baseUrl}/api/v3/district/{$districtId}";
+           Log::error( $url );
+        try {
+            $response = Http::timeout(6)->get($url);
+            if ($response->successful()) {
+                $data = $response->json('data');
+                return $data['district_name_en'] ?? $data['district_name'] ?? $districtId;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error fetching district', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return $districtId;
+    }
+
+    // 🔹 Fetch Upazila Name
+    private function fetchUpazilaName($baseUrl, $upazilaId)
+    {
+        $url = "{$baseUrl}/api/v3/upazila/{$upazilaId}";
+           Log::error( $url );
+        try {
+            $response = Http::timeout(6)->get($url);
+            if ($response->successful()) {
+                $data = $response->json('data');
+                return $data['upazila_name_en'] ?? $data['upazila_name'] ?? $upazilaId;
+            }
+        } catch (\Throwable $e) {
+            Log::error('Error fetching upazila', ['url' => $url, 'error' => $e->getMessage()]);
+        }
+
+        return $upazilaId;
     }
 }

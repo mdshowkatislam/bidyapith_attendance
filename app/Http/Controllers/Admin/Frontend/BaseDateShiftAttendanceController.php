@@ -20,9 +20,10 @@ class BaseDateShiftAttendanceController extends Controller
             ->get('http://attendance2.localhost.com/api/date-shift-wise-attendance');
         $json = $response->json();
    
-        dd($json);
+        // dd($json);
 
         return view('admin.date_shift.index', [
+            'branches' => $json['branches'] ?? null,
             'shifts' => $json['shifts'] ?? null,
             'divisions' => $json['divisions'] ?? null,
             'districts' => $json['districts'] ?? null,
@@ -34,6 +35,7 @@ class BaseDateShiftAttendanceController extends Controller
     public function reportGenarate(Request $request)
     {
         $queryParams = $request->all();
+        \Log::info($queryParams);
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',

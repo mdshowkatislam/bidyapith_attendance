@@ -79,8 +79,10 @@ Route::middleware('auth')->group(function () {
         Route::get('edit/{id}', [EmployeeProfileController::class, 'edit'])->name('employee_profile.edit');
         Route::put('update/{id}', [EmployeeProfileController::class, 'update'])->name('employee_profile.update');
         Route::delete('delete/{attendance_status}', [EmployeeProfileController::class, 'destroy'])->name('employee_profile.destroy');
-        Route::get('/get-districts/{divisionId}', [EmployeeProfileController::class, 'getDistrictsByDivision'])->name('get.districts');
-        Route::get('/get-upazilas/{districtId}', [EmployeeProfileController::class, 'getUpazilasByDistrict'])->name('get.upazilas');
+        
+        // ❌ now no need of the below route as they are auto filtering in client side ?? ▼▼▼
+        // Route::get('/get-districts/{divisionId}', [EmployeeProfileController::class, 'getDistrictsByDivision'])->name('get.districts');
+        // Route::get('/get-upazilas/{districtId}', [EmployeeProfileController::class, 'getUpazilasByDistrict'])->name('get.upazilas');
         Route::patch('employee-profile/{id}/toggle-status', [EmployeeProfileController::class, 'toggleStatus'])->name('employee_profile.toggleStatus');
     });
 });

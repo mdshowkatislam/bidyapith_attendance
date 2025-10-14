@@ -19,7 +19,7 @@ class AppServiceProvider extends ServiceProvider
    public function register()
     {
         $this->app->singleton(DropdownService::class, function ($app) {
-            return new DropdownService(
+            return new DropdownService(   // here, i am getting Undefined type 'App\Services\DropdownService'.?
                 $app->make(BranchRepository::class),
                 $app->make(ShiftRepository::class),
                 $app->make(DivisionRepository::class),

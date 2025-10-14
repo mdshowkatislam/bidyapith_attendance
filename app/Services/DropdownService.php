@@ -3,58 +3,58 @@
 namespace App\Services;
 
 use App\Repositories\BranchRepository;
+use App\Repositories\ShiftRepository;
+use App\Repositories\DivisionRepository;
+use App\Repositories\DistrictRepository;
+use App\Repositories\UpazilaRepository;
+use App\Models\Group;
 
-class BranchService
+class DropdownService
 {
-    private $branchRepository;
+    protected $branchRepository;
+    protected $shiftRepository;
+    protected $divisionRepository;
+    protected $districtRepository;
+    protected $upazilaRepository;
 
-    public function __construct(BranchRepository $branchRepository)
-    {
+    public function __construct(
+        BranchRepository $branchRepository,
+        ShiftRepository $shiftRepository,
+        DivisionRepository $divisionRepository,
+        DistrictRepository $districtRepository,
+        UpazilaRepository $upazilaRepository
+    ) {
         $this->branchRepository = $branchRepository;
+        $this->shiftRepository = $shiftRepository;
+        $this->divisionRepository = $divisionRepository;
+        $this->districtRepository = $districtRepository;
+        $this->upazilaRepository = $upazilaRepository;
     }
 
-    public function getAll()
+    public function getAllDropdownData(): array
     {
-        return $this->branchRepository->getAll();
+        return [
+            'branches' => $this->branchRepository->getAll()->values()->toArray(),
+            'shifts' => $this->shiftRepository->getAll()->values()->toArray(),
+            'divisions' => $this->divisionRepository->getAll()->values()->toArray(),
+            'districts' => $this->districtRepository->getAll()->values()->toArray(),
+            'upazilas' => $this->upazilaRepository->getAll()->values()->toArray(),
+            'groups' => Group::all()->toArray(),
+        ];
     }
 
-    public function getByUid($uid)
+    public function getShiftsByBranch($branchId): array
     {
-        return $this->branchRepository->getByUid($uid);
+        return $this->shiftRepository->getByBranch($branchId)->toArray();
     }
 
-    public function create($data)
+    public function getDistrictsByDivision($divisionId): array
     {
-      
-        return $this->branchRepository->create($data);
+        return $this->districtRepository->getByDivision($divisionId)->toArray();
     }
 
-    public function updateByUid($uid, $data)
+    public function getUpazilasByDistrict($districtId): array
     {
-        return $this->branchRepository->update($uid, $data);
-    }
-
-    public function getByEiinId($eiin, $optimize = null)
-    {
-        if ($optimize) {
-            return $this->model->where('eiin', $eiin)->select('uid', 'branch_name')->first();
-        } else {
-            return $this->model->where('eiin', $eiin)->select('uid', 'branch_name', 'branch_name_en', 'branch_location', 'head_of_branch_id', 'eiin', 'rec_status')->first();
-        }
-    }
-
-    public function getByBranchId($eiin, $optimize = null, $branch_id)
-    {
-        return $this->branchRepository->getByBranchId($eiin, $optimize = null, $branch_id);
-    }
-
-    public function deleteByUid($id)
-    {
-        return $this->branchRepository->delete($id);
-    }
-
-    public function getRelatedItemsForBranch($related_items, $id)
-    {
-        return $this->branchRepository->getRelatedItemsForBranch($related_items, $id);
+        return $this->upazilaRepository->getByDistrict($districtId)->toArray();
     }
 }

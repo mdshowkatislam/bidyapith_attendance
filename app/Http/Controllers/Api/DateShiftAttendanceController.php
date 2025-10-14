@@ -19,7 +19,7 @@ class DateShiftAttendanceController extends Controller
     }
   public function index()
     {
-        \Log::info('hi0');
+      
         try {
             $data = $this->dropdownService->getAllDropdownData();
 

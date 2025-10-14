@@ -178,9 +178,9 @@ Route::post('/accessBdStore', [AccessDBController::class, 'accessDBstore']);
 // ✅✅ Index page view -Controller ( Branch,shift,dates ...etc) 🧪🧪
 
 Route::get('/date-shift-wise-attendance', [DateShiftAttendanceController::class, 'index']);
-Route::get('/shifts/by-branch/{branchId}', [DateShiftAttendanceController::class, 'getShiftsByBranch']);
-Route::get('/districts/by-division/{divisionId}', [DateShiftAttendanceController::class, 'getDistrictsByDivision']);
-Route::get('/upazilas/by-district/{districtId}', [DateShiftAttendanceController::class, 'getUpazilasByDistrict']);
+// Route::get('/shifts/by-branch/{branchId}', [DateShiftAttendanceController::class, 'getShiftsByBranch']);
+// Route::get('/districts/by-division/{divisionId}', [DateShiftAttendanceController::class, 'getDistrictsByDivision']);
+// Route::get('/upazilas/by-district/{districtId}', [DateShiftAttendanceController::class, 'getUpazilasByDistrict']);
 
 
 // ✅✅ Employee Attendance Calculation 🔥🔥🔥

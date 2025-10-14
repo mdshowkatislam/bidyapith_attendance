@@ -37,8 +37,6 @@
             color: #fa0202;
             font-size: 22px;
             text-shadow: chartreuse;
-
-
         }
     </style>
 @endpush
@@ -49,7 +47,6 @@
             <div class="card card-outline card-primary ">
                 <div class="card-body d-flex flex-column align-items-center position-relative pb-0"
                      style="background: #E9F0F7">
-                    {{-- @dd($shifts) --}}
                     <form id="sync-form"
                           action="{{ route('attendance.report') }}"
                           method="GET"
@@ -58,6 +55,24 @@
 
                         @csrf
                         <div class="container mt-4 d-flex justify-content-center ">
+                            <!-- Branch Selection -->
+                            <div class="col-md-3 mb-3">
+                                <div class="form-group">
+                                    <label for="branch_id">Select Branch <span class="text-danger">*</span></label>
+                                    <select id="branch_id"
+                                            name="branch_id"
+                                            class="form-control select2bs4"
+                                            style="width: 100%;"
+                                            required>
+                                        <option value="">-- Choose Branch --</option>
+                                        @foreach ($branches as $branch)
+                                            <option value="{{ $branch['id'] }}">{{ $branch['branch_name_en'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Shift Selection (populated based on selected branch) -->
                             <div class="col-md-3 mb-3">
                                 <div class="form-group">
                                     <label for="shift_id">Select Shift <span class="text-danger">*</span></label>
@@ -65,15 +80,15 @@
                                             name="shift_id"
                                             class="form-control select2bs4"
                                             style="width: 100%;"
-                                            required>
+                                            required
+                                            disabled>
                                         <option value="">-- Choose Shift --</option>
-                                        @foreach ($shifts as $item)
-                                            <option value="{{ $item['id'] }}">{{ $item['shift_name_en'] }}</option>
-                                        @endforeach
+                                        <!-- Shifts will be populated dynamically via JavaScript -->
                                     </select>
                                 </div>
                             </div>
-                            <div class="col-md-9 mb-3 d-flex justify-content-center"
+
+                            <div class="col-md-6 mb-3 d-flex justify-content-center"
                                  style="background:#e7f1fa;border: 1px solid rgb(142, 199, 231); border-radius: 10px;">
                                 <div class="col-md-6 mb-3 position-relative input-clear-wrapper">
                                     <label for="date_range">Select Date Range <span class="text-danger">*</span></label>
@@ -93,8 +108,6 @@
                                 <h2 class="mb-3 mt-4"
                                     style="color:#007BFF;">or</h2>
 
-
-
                                 <div class="col-md-6 mb-3 position-relative input-clear-wrapper">
                                     <label for="month">Select Month <span class="text-danger">*</span></label>
                                     <input type="text"
@@ -110,8 +123,6 @@
                                             style="display:none;">&times;</button>
                                 </div>
                             </div>
-
-
                         </div>
 
                         <div class="container mt-4 d-flex justify-content-center">
@@ -121,38 +132,31 @@
                                         name="division_id"
                                         class="form-control">
                                     <option value="">-- Choose Division --</option>
-                                    {{-- Loop divisions here --}}
                                     @foreach ($divisions as $division)
                                         <option value="{{ $division['id'] }}">{{ $division['division_name_en'] }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
-
-
                             <div class="col-md-3 mb-3">
                                 <label for="district_id">Select District</label>
                                 <select id="district_id"
                                         name="district_id"
-                                        class="form-control">
+                                        class="form-control"
+                                        disabled>
                                     <option value="">-- Choose District</option>
-                                    {{-- Loop departments here --}}
-                                    @foreach ($districts as $item)
-                                        <option value="{{ $item['id'] }}">{{ $item['district_name_en'] }}</option>
-                                    @endforeach
+                                    <!-- Districts will be populated via AJAX based on division -->
                                 </select>
                             </div>
 
-                            <div class="col-md-3 mb-3 ">
+                            <div class="col-md-3 mb-3">
                                 <label for="upazila_id">Select Upazila</label>
                                 <select id="upazila_id"
                                         name="upazila_id"
-                                        class="form-control">
+                                        class="form-control"
+                                        disabled>
                                     <option value="">-- Choose Upazila --</option>
-                                    {{-- Loop sections here --}}
-                                    @foreach ($upazilas as $upazila)
-                                        <option value="{{ $upazila['id'] }}">{{ $upazila['upazila_name_en'] }}</option>
-                                    @endforeach
+                                    <!-- Upazilas will be populated via AJAX based on district -->
                                 </select>
                             </div>
 
@@ -162,7 +166,6 @@
                                         name="group_id"
                                         class="form-control">
                                     <option value="">-- Choose Group --</option>
-                                    {{-- Loop groups here --}}
                                     @foreach ($groups as $group)
                                         <option value="{{ $group['id'] }}">{{ $group['group_name'] }}</option>
                                     @endforeach
@@ -204,99 +207,122 @@
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
     <script>
+        // Store data from PHP (no AJAX needed for branches/shifts since we have all data)
+        const shiftsData = @json($shifts);
+        const districtsData = @json($districts);
+        const upazilasData = @json($upazilas);
+
         var myJQ = $.noConflict(true);
+        
         myJQ(function() {
+            // ========== BRANCH & SHIFTS (No AJAX - all data loaded) ==========
+            myJQ('#branch_id').on('change', function() {
+                const branchId = myJQ(this).val();
+                const shiftSelect = myJQ('#shift_id');
+                
+                shiftSelect.empty().append('<option value="">-- Choose Shift --</option>');
+                
+                if (branchId) {
+                    // Filter shifts by selected branch from pre-loaded data
+                    const branchShifts = shiftsData.filter(shift => shift.branch_id == branchId);
+                    
+                    if (branchShifts.length > 0) {
+                        branchShifts.forEach(shift => {
+                            shiftSelect.append(
+                                myJQ('<option>', {
+                                    value: shift.id,
+                                    text: shift.shift_name_en + ' (' + shift.shift_start_time + ' - ' + shift.shift_end_time + ')'
+                                })
+                            );
+                        });
+                        shiftSelect.prop('disabled', false);
+                    } else {
+                        shiftSelect.append('<option value="">No shifts available</option>');
+                        shiftSelect.prop('disabled', true);
+                    }
+                } else {
+                    shiftSelect.prop('disabled', true);
+                }
+            });
+
+            // ========== DIVISION, DISTRICT & UPAZILA (Using pre-loaded data) ==========
+            myJQ('#division_id').on('change', function() {
+                const divisionId = myJQ(this).val();
+                const districtSelect = myJQ('#district_id');
+                const upazilaSelect = myJQ('#upazila_id');
+                
+                districtSelect.empty().append('<option value="">-- Choose District --</option>').prop('disabled', true);
+                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
+
+                if (divisionId) {
+                    // Filter districts by division from pre-loaded data
+                    const divisionDistricts = districtsData.filter(district => district.division_id == divisionId);
+                    
+                    if (divisionDistricts.length > 0) {
+                        divisionDistricts.forEach(district => {
+                            districtSelect.append(
+                                myJQ('<option>', {
+                                    value: district.id,
+                                    text: district.district_name_en
+                                })
+                            );
+                        });
+                        districtSelect.prop('disabled', false);
+                    } else {
+                        districtSelect.append('<option value="">No districts available</option>');
+                        districtSelect.prop('disabled', true);
+                    }
+                }
+            });
+
+            myJQ('#district_id').on('change', function() {
+                const districtId = myJQ(this).val();
+                const upazilaSelect = myJQ('#upazila_id');
+                
+                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
+
+                if (districtId) {
+                    // Filter upazilas by district from pre-loaded data
+                    const districtUpazilas = upazilasData.filter(upazila => upazila.district_id == districtId);
+                    
+                    if (districtUpazilas.length > 0) {
+                        districtUpazilas.forEach(upazila => {
+                            upazilaSelect.append(
+                                myJQ('<option>', {
+                                    value: upazila.id,
+                                    text: upazila.upazila_name_en
+                                })
+                            );
+                        });
+                        upazilaSelect.prop('disabled', false);
+                    } else {
+                        upazilaSelect.append('<option value="">No upazilas available</option>');
+                        upazilaSelect.prop('disabled', true);
+                    }
+                }
+            });
+
+            // ========== FORM VALIDATION ==========
             myJQ('form').on('submit', function(e) {
                 let dateRange = myJQ('#date_range').val().trim();
                 let month = myJQ('#month').val().trim();
 
                 if (!dateRange && !month) {
-                    e.preventDefault(); // Stop the form from submitting
+                    e.preventDefault();
                     alert("Please select either a Date Range or a Month.");
                     return false;
                 }
 
-                // Your existing removal of unnecessary select names
+                // Remove unnecessary parameters from form submission
                 if (myJQ("select[name='upazila_id']").val()) {
                     myJQ("select[name='district_id']").removeAttr('name');
                     myJQ("select[name='division_id']").removeAttr('name');
-                }
-                if (myJQ("select[name='district_id']").val()) {
+                } else if (myJQ("select[name='district_id']").val()) {
                     myJQ("select[name='division_id']").removeAttr('name');
                 }
             });
 
-            // partisal division,district and upazila selection.
-
-            $(document).ready(function() {
-
-                // Initially clear and disable district + upazila
-                let $district = $("select[name='district_id']").empty()
-                    .append('<option value="">Select District</option>')
-                    .prop('disabled', true);
-
-                let $upazila = $("select[name='upazila_id']").empty()
-                    .append('<option value="">Select Upazila</option>')
-                    .prop('disabled', true);
-
-                // Division change -> load departments
-                $("select[name='division_id']").on("change", function() {
-                    let divisionId = $(this).val();
-
-                    $district.empty().append('<option value="">Select District</option>').prop(
-                        'disabled', true);
-                    $upazila.empty().append('<option value="">Select Upazila</option>').prop(
-                        'disabled', true);
-
-                    if (divisionId) {
-                        $.ajax({
-                            url: '/get-districts/' + divisionId,
-                            type: 'GET',
-                           
-                            success: function(data) {
-                                $.each(data, function(key, value) {
-                                    $district.append('<option value="' + value
-                                        .id + '">' + value.district_name_en +
-                                        '</option>');
-                                });
-                                $district.prop('disabled', false);
-                            },
-                            error: function(xhr) {
-                                console.error('ajax error', xhr);
-                            }
-                        });
-                    }
-                });
-
-                // District change -> load sections
-                $district.on('change', function() {
-                    let districtId = $(this).val();
-
-                    $upazila.empty().append('<option value="">Select Upazila</option>').prop(
-                        'disabled', true);
-
-                    if (districtId) {
-                        $.ajax({
-                            url: '/get-upazilas/' + districtId,
-                            type: 'GET',
-                           
-                            success: function(data) {
-                                $.each(data, function(key, value) {
-                                    $php.append('<option value="' + value
-                                        .id + '">' + value.upazila_name_en +
-                                        '</option>');
-                                });
-                                $upazila.prop('disabled', false);
-                            }
-                        });
-                    }
-                });
-
-            });
-
-            // -- End of division wise district and upazila selection --
-
-            // Initialize inputs empty and enabled
+            // ========== DATE RANGE & MONTH PICKERS ==========
             myJQ('#date_range').val('').prop('disabled', false);
             myJQ('#month').val('').prop('disabled', false);
 
@@ -304,7 +330,7 @@
                 locale: {
                     format: 'YYYY-MM-DD'
                 },
-                autoUpdateInput: false // important for manual clearing detection
+                autoUpdateInput: false
             });
 
             myJQ('#month').daterangepicker({
@@ -316,53 +342,59 @@
                 autoUpdateInput: false
             });
 
-            // When date_range selected
+            // Date range events
             myJQ('#date_range').on('apply.daterangepicker', function(ev, picker) {
-                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format(
-                    'YYYY-MM-DD'));
+                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
                 if (myJQ(this).val()) {
-                    // Clear and disable month
                     myJQ('#month').val('').prop('disabled', true);
                 } else {
                     myJQ('#month').prop('disabled', false);
                 }
+                toggleClearButton('#date_range', '#clear-date_range');
             });
 
-            // When date_range cleared manually
             myJQ('#date_range').on('cancel.daterangepicker', function(ev, picker) {
                 myJQ(this).val('');
                 myJQ('#month').prop('disabled', false);
+                toggleClearButton('#date_range', '#clear-date_range');
             });
 
-            // When month selected
+            // Month events
             myJQ('#month').on('apply.daterangepicker', function(ev, picker) {
                 myJQ(this).val(picker.startDate.format('YYYY-MM'));
                 if (myJQ(this).val()) {
-                    // Clear and disable date_range
                     myJQ('#date_range').val('').prop('disabled', true);
                 } else {
                     myJQ('#date_range').prop('disabled', false);
                 }
+                toggleClearButton('#month', '#clear-month');
             });
 
-            // When month cleared manually
             myJQ('#month').on('cancel.daterangepicker', function(ev, picker) {
                 myJQ(this).val('');
                 myJQ('#date_range').prop('disabled', false);
+                toggleClearButton('#month', '#clear-month');
             });
 
-            // Clear button resets everything
+            // ========== CLEAR BUTTON FUNCTIONALITY ==========
             myJQ('#clear-btn').on('click', function() {
+                // Clear all form fields
                 myJQ('#date_range').val('').prop('disabled', false);
                 myJQ('#month').val('').prop('disabled', false);
-
-                myJQ('#shift_id').val('').prop('disabled', false);
-                myJQ('#division_id').val('').prop('disabled', false);
-                myJQ('#district_id').val('').prop('disabled', false);
-                myJQ('#upazila_id').val('').prop('disabled', false);
-                myJQ('#group_id').val('').prop('disabled', false);
+                myJQ('#branch_id').val('').trigger('change');
+                myJQ('#division_id').val('').trigger('change');
+                myJQ('#group_id').val('');
+                
+                // Reset dropdowns
+                myJQ('#shift_id').empty().append('<option value="">-- Choose Shift --</option>').prop('disabled', true);
+                myJQ('#district_id').empty().append('<option value="">-- Choose District --</option>').prop('disabled', true);
+                myJQ('#upazila_id').empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
+                
+                toggleClearButton('#date_range', '#clear-date_range');
+                toggleClearButton('#month', '#clear-month');
             });
 
+            // ========== HELPER FUNCTIONS ==========
             function toggleClearButton(inputSelector, clearBtnSelector) {
                 if (myJQ(inputSelector).val()) {
                     myJQ(clearBtnSelector).show();
@@ -371,11 +403,11 @@
                 }
             }
 
-            // Initially toggle clear buttons on page load
+            // Initialize clear buttons
             toggleClearButton('#date_range', '#clear-date_range');
             toggleClearButton('#month', '#clear-month');
 
-            // On input value change (typing or via picker apply/cancel)
+            // Input change events for clear buttons
             myJQ('#date_range').on('apply.daterangepicker cancel.daterangepicker input', function() {
                 toggleClearButton('#date_range', '#clear-date_range');
             });
@@ -395,47 +427,6 @@
                 myJQ('#date_range').prop('disabled', false);
                 toggleClearButton('#month', '#clear-month');
             });
-            // When date_range selected
-            myJQ('#date_range').on('apply.daterangepicker', function(ev, picker) {
-                myJQ(this).val(
-                    picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD')
-                );
-                toggleClearButton('#date_range', '#clear-date_range'); // ADD THIS
-                if (myJQ(this).val()) {
-                    myJQ('#month').val('').prop('disabled', true);
-                    toggleClearButton('#month', '#clear-month'); // ADD THIS
-                } else {
-                    myJQ('#month').prop('disabled', false);
-                }
-            });
-
-            // When date_range cleared manually
-            myJQ('#date_range').on('cancel.daterangepicker', function(ev, picker) {
-                myJQ(this).val('');
-                toggleClearButton('#date_range', '#clear-date_range'); // ADD THIS
-                myJQ('#month').prop('disabled', false);
-            });
-
-            // When month selected
-            myJQ('#month').on('apply.daterangepicker', function(ev, picker) {
-                myJQ(this).val(picker.startDate.format('YYYY-MM'));
-                toggleClearButton('#month', '#clear-month'); // ADD THIS
-                if (myJQ(this).val()) {
-                    myJQ('#date_range').val('').prop('disabled', true);
-                    toggleClearButton('#date_range', '#clear-date_range'); // ADD THIS
-                } else {
-                    myJQ('#date_range').prop('disabled', false);
-                }
-            });
-
-            // When month cleared manually
-            myJQ('#month').on('cancel.daterangepicker', function(ev, picker) {
-                myJQ(this).val('');
-                toggleClearButton('#month', '#clear-month'); // ADD THIS
-                myJQ('#date_range').prop('disabled', false);
-            });
-
-
         });
     </script>
 @endpush

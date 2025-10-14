@@ -8,7 +8,7 @@ class ShiftRepository extends BaseRepository
 {
     public function getAll(): Collection
     {
-        $url = "{$this->baseUrl}/api/v3/shift";
+        $url = "{$this->baseUrl}/api/v3/shift-list";
         $data = $this->makeApiCall($url);
         
         return collect($data)->map(function ($shift) {

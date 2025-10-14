@@ -12,6 +12,24 @@ use Illuminate\Support\Facades\Route;
 //     Log::debug('This is a debug log test');
 //     return 'Log written!';
 // });
+// In routes/web.php or routes/api.php
+Route::get('/debug-classes', function () {
+    $classes = [
+        'App\Services\DropdownService',
+        'App\Repositories\BranchRepository',
+        'App\Repositories\ShiftRepository',
+        'App\Repositories\DivisionRepository',
+        'App\Repositories\DistrictRepository',
+        'App\Repositories\UpazilaRepository',
+    ];
+
+    $results = [];
+    foreach ($classes as $class) {
+        $results[$class] = class_exists($class) ? 'EXISTS' : 'MISSING';
+    }
+
+    return $results;
+});
 
 Route::get('/', function () {
     return view('auth.login');

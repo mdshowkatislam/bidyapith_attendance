@@ -175,13 +175,21 @@ Route::prefix('holiday_manage')->group(function () {
 // ✅ Access DB Controll 👈
 Route::post('/accessBdStore', [AccessDBController::class, 'accessDBstore']);
 
-// ✅✅ Employee Attendance Calculation
-Route::get('/date/shift/attendance', [AttendanceController::class, 'index']);
+// ✅✅ Index page view -Controller ( Branch,shift,dates ...etc) 🧪🧪
 
 Route::get('/date-shift-wise-attendance', [DateShiftAttendanceController::class, 'index']);
+Route::get('/shifts/by-branch/{branchId}', [DateShiftAttendanceController::class, 'getShiftsByBranch']);
+Route::get('/districts/by-division/{divisionId}', [DateShiftAttendanceController::class, 'getDistrictsByDivision']);
+Route::get('/upazilas/by-district/{districtId}', [DateShiftAttendanceController::class, 'getUpazilasByDistrict']);
 
-Route::get('/get-departments', [DateShiftAttendanceController::class, 'getDepartments']);
-Route::get('/get-sections', [DateShiftAttendanceController::class, 'getSections']);
+
+// ✅✅ Employee Attendance Calculation 🔥🔥🔥
+Route::get('/date/shift/attendance', [AttendanceController::class, 'index']);
+
+
+
+// Route::get('/get-departments', [DateShiftAttendanceController::class, 'getDepartments']);
+// Route::get('/get-sections', [DateShiftAttendanceController::class, 'getSections']);
 
 
  // EMPLOYEE MANAGEMENT API

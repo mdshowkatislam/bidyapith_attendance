@@ -33,6 +33,8 @@ class DropdownService
 
     public function getAllDropdownData(): array
     {
+        \Log::info('bbbb');
+        \Log::info($this->shiftRepository->getAll()->values()->toArray());
         return [
             'branches' => $this->branchRepository->getAll()->values()->toArray(),
             'shifts' => $this->shiftRepository->getAll()->values()->toArray(),
@@ -43,9 +45,9 @@ class DropdownService
         ];
     }
 
-    public function getShiftsByBranch($branchId): array
+    public function getShiftsByBranch($branchUid): array
     {
-        return $this->shiftRepository->getByBranch($branchId)->toArray();
+        return $this->shiftRepository->getByBranch($branchUid)->toArray();
     }
 
     public function getDistrictsByDivision($divisionId): array

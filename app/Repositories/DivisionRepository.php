@@ -18,4 +18,9 @@ class DivisionRepository extends BaseRepository
             ];
         })->filter();
     }
+      public function getDivisionDetails($divisionId)
+    {
+        $url = "{$this->baseUrl}/api/v3/division/{$divisionId}";
+        return $this->makeApiCall($url);
+    }
 }

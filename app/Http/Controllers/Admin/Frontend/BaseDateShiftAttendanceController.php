@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Http;
 class BaseDateShiftAttendanceController extends Controller
 {
     public function index()
-    {
+    {  
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'accept' => 'application/json',
@@ -44,7 +44,7 @@ class BaseDateShiftAttendanceController extends Controller
             ->withOptions(['verify' => false])
             ->get('http://attendance2.localhost.com/api/date/shift/attendance', $queryParams);
 
-         
+          dd($response->json());
 
         if ($response->json()['type'] == 1) {
             $single_json = $response->json()['results'][0];
@@ -61,7 +61,7 @@ class BaseDateShiftAttendanceController extends Controller
         }
         if ($response->json()['type'] == 2 || $response->json()['type'] == 3) {
             $multiple_json = $response->json()['results'];
-            // dd(      $multiple_json );
+            dd(      $multiple_json );
             return view('admin.date_shift.report-multiple', [
                'data'=>$multiple_json 
             ]);

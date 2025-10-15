@@ -6,12 +6,12 @@ use App\Http\Controllers\Admin\EmployeeProfileController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\UpazilaController;
 use Illuminate\Support\Facades\Route;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 
-// Route::get('/log', function () {
-//     Log::debug('This is a debug log test');
-//     return 'Log written!';
-// });
+Route::get('/log', function () {
+    Log::debug('This is a debug log test');
+    return 'Log written!';
+});
 // In routes/web.php or routes/api.php
 Route::get('/debug-classes', function () {
     $classes = [

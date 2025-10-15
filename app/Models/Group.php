@@ -23,27 +23,28 @@ class Group extends Model
         'flexible_out_time'
     ];
 
-    /**
-     * Automatically append external API data to model JSON.
-     */
-    protected $appends = ['branch_data', 'shift_data'];
+
 
     /**
      * ✅ Fetch branch data via external API (from config/api_url.php)
      */
 
 
-public function getBranchDataAttribute()
-{
-    $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
-    return ExternalDataService::fetchBranchDetails($baseUrl, $this->branch_uid);
-}
+  public function getBranchDetailsAttribute()
+    {
+        // Don't call statically - use service container
+        $externalDataService = app(ExternalDataService::class);
+        return $externalDataService->fetchBranchDetails($this->branch_uid);
+    }
 
-public function getShiftDataAttribute()
-{
-    $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
-    return ExternalDataService::fetchShiftDetails($baseUrl, $this->shift_uid);
-}
+    /**
+     * Get shift details relationship
+     */
+    public function getShiftDetailsAttribute()
+    {
+        $externalDataService = app(ExternalDataService::class);
+        return $externalDataService->fetchShiftDetails($this->shift_uid);
+    }
 
     /**
      * ✅ Relationships (only relevant ones kept)

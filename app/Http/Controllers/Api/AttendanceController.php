@@ -3,97 +3,104 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\GroupResource;
+use App\Services\ExternalDataService;
 use App\Models\Employee;
 use App\Models\Group;
 use App\Models\Holiday;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class AttendanceController extends Controller
 {
-    private $baseUrl;
+    protected $externalDataService;
 
-    public function __construct()
+    public function __construct(ExternalDataService $externalDataService)
     {
-        $this->baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
+        $this->externalDataService = $externalDataService;
     }
 
     public function index(Request $request)
     {
-        // Validate only local fields
-        $validated = $request->validate([
-            'branch_id' => 'required|integer',
-            'shift_id' => 'required|integer',
-            'date_range' => 'nullable|string|required_without:month',
-            'month' => 'nullable|date_format:Y-m|required_without:date_range',
-            'upazila_id' => 'nullable|integer',
-            'district_id' => 'nullable|integer',
-            'division_id' => 'nullable|integer',
-            'group_id' => 'nullable|integer|exists:groups,id',
-        ]);
+        \Log::info("kkkj");
+        // \Log::info('exit');
+        try {
+         
+            // Validate only local fields
+            $validated = $request->validate([
+                'branch_uid' => 'required|integer',
+                'shift_uid' => 'required|integer',
+                'date_range' => 'nullable|string|required_without:month',
+                'month' => 'nullable|date_format:Y-m|required_without:date_range',
+                'upazila_id' => 'nullable|integer',
+                'district_id' => 'nullable|integer',
+                'division_id' => 'nullable|integer',
+                'group_id' => 'nullable|integer|exists:groups,id',
+            ]);
+ \Log::info("www");
+            // Parse date range or month
+            [$start, $end] = $this->getDateRangeFromRequest($validated);
 
-        // Parse date range or month
-        [$start, $end] = $this->getDateRangeFromRequest($validated);
+            // Get shift details from external service
+            $shift = $this->externalDataService->fetchShiftDetails($validated['shift_uid']);
+         
 
-        // Get shift details from external service
-        $shift = $this->fetchShiftDetails($validated['shift_id']);
-        if (!$shift) {
-            return response()->json(['error' => 'Shift not found'], 404);
+            if (!$shift) {
+                
+                return response()->json(['error' => 'Shift not found'], 404);
+            }
+
+            // Get branch details from external service
+            $branch = $this->externalDataService->fetchBranchDetails($validated['branch_uid']);
+            if (!$branch) {
+                return response()->json(['error' => 'Branch not found'], 404);
+            }
+ \Log::info("+++");
+            // Get employees filtered by branch, shift and other criteria
+            $employees = $this->getFilteredEmployees($validated, $branch, $shift);
+
+            // Get attendance records for date range from external service
+            $attendanceData = $this->externalDataService->fetchAttendanceData(
+                $employees->pluck('profile_id')->toArray(),
+                $start->toDateString(),
+                $end->toDateString()
+            );
+
+            // Build results for each date
+            $results = $this->buildAttendanceResults(
+                $employees,
+                $attendanceData,
+                $start,
+                $end,
+                $shift,
+                $validated['branch_uid'],
+                $validated['shift_uid']
+            );
+
+            // Determine type
+            $type = $this->getReportType($validated, $start, $end);
+
+            return response()->json([
+                'type' => $type,
+                'branch' => $branch,
+                'shift' => $shift,
+                'results' => $results,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error in attendance index method: ' . $e->getMessage());
+            Log::error('Full error trace: ' . $e->getTraceAsString());
+            return response()->json(['error' => 'Internal server error'], 500);
         }
-
-        // Get branch details from external service
-        $branch = $this->fetchBranchDetails($validated['branch_id']);
-        if (!$branch) {
-            return response()->json(['error' => 'Branch not found'], 404);
-        }
-
-        // Get employees filtered by branch, shift and other criteria
-        $employees = $this->getFilteredEmployees($validated, $branch, $shift);
-
-        // Get attendance records for date range from external service
-        $attendanceData = $this->getAttendanceData(
-            $employees->pluck('profile_id')->toArray(),
-            $start,
-            $end
-        );
-
-        // Build results for each date
-        $results = $this->buildAttendanceResults(
-            $employees,
-            $attendanceData,
-            $start,
-            $end,
-            $shift,
-            $validated['branch_id'],
-            $validated['shift_id']
-        );
-
-        // Determine type
-        if (!empty($validated['month'])) {
-            $type = 3;  // Month
-        } elseif ($start->eq($end)) {
-            $type = 1;  // Single day
-        } else {
-            $type = 2;  // Multiple dates
-        }
-
-        return response()->json([
-            'type' => $type,
-            'branch' => $branch,
-            'shift' => $shift,
-            'results' => $results,
-        ]);
     }
 
     /**
      * Extract date range from request (either date_range or month)
      */
     private function getDateRangeFromRequest(array $validated): array
+
     {
+         \Log::info("qqq");
         if (!empty($validated['date_range']) && str_contains($validated['date_range'], ' - ')) {
             [$start, $end] = explode(' - ', $validated['date_range'], 2);
             return [
@@ -113,75 +120,18 @@ class AttendanceController extends Controller
     }
 
     /**
-     * Fetch shift details from external service
-     */
-    private function fetchShiftDetails(int $shiftId)
-    {
-        $url = "{$this->baseUrl}/api/v3/shift/{$shiftId}";
-        Log::info("Fetching shift from URL: {$url}");
-
-        try {
-            $response = Http::timeout(10)->get($url);
-            
-            if ($response->successful()) {
-                $data = $response->json('data') ?? [];
-                Log::info("Shift API Success", ['data' => $data]);
-                return is_array($data) ? $data : null;
-            } else {
-                Log::warning('Shift API failed', [
-                    'url' => $url,
-                    'status' => $response->status(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching shift', [
-                'url' => $url, 
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return null;
-    }
-
-    /**
-     * Fetch branch details from external service
-     */
-    private function fetchBranchDetails(int $branchId)
-    {
-        $url = "{$this->baseUrl}/api/v3/branch/{$branchId}";
-        Log::info("Fetching branch from URL: {$url}");
-
-        try {
-            $response = Http::timeout(10)->get($url);
-            
-            if ($response->successful()) {
-                $data = $response->json('data') ?? [];
-                Log::info("Branch API Success", ['data' => $data]);
-                return is_array($data) ? $data : null;
-            } else {
-                Log::warning('Branch API failed', [
-                    'url' => $url,
-                    'status' => $response->status(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching branch', [
-                'url' => $url, 
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return null;
-    }
-
-    /**
      * Get employees filtered by branch, shift and other criteria
      */
     private function getFilteredEmployees(array $validated, array $branch, array $shift)
     {
-        // Get groups for the selected branch and shift
-        $query = Group::where('branch_uid', $validated['branch_id'])
-                     ->where('shift_uid', $validated['shift_id']);
+        \Log::info("jjj");
+        \Log::info($validated);
+        \Log::info( $branch);
+        \Log::info($shift);
+       
+        
+        $query = Group::where('branch_uid', $validated['branch_uid'])
+                     ->where('shift_uid', $validated['shift_uid']);
 
         // If specific group is selected, filter by that group only
         if (!empty($validated['group_id'])) {
@@ -200,7 +150,7 @@ class AttendanceController extends Controller
             $query->whereIn('groups.id', $groupIds);
         });
 
-        // Apply location filters - these will be validated against external API data
+        // Apply location filters
         if (!empty($validated['upazila_id'])) {
             $employeeQuery->where('upazila_id', $validated['upazila_id']);
         } elseif (!empty($validated['district_id'])) {
@@ -215,19 +165,11 @@ class AttendanceController extends Controller
         return $employees->map(function ($employee) use ($groups) {
             $employeeGroup = $employee->groups->first();
             
-            // Fetch employee details from external API
-            $employeeData = $this->fetchEmployeeDetails(
+            // Fetch employee details from external API using service
+            $employeeData = $this->externalDataService->fetchEmployeeDetails(
                 $employee->person_type, 
                 $employee->profile_id
             );
-
-            // Fetch location names
-            $divisionName = isset($employeeData['division_id']) ? 
-                $this->fetchDivisionName($employeeData['division_id']) : null;
-            $districtName = isset($employeeData['district_id']) ? 
-                $this->fetchDistrictName($employeeData['district_id']) : null;
-            $upazilaName = isset($employeeData['upazilla_id']) ? 
-                $this->fetchUpazilaName($employeeData['upazilla_id']) : null;
 
             return (object) [
                 'id' => $employee->id,
@@ -240,122 +182,17 @@ class AttendanceController extends Controller
                 'end_time' => $employeeGroup->shift->shift_end_time ?? '17:00',
                 'flexible_in_time' => $employeeGroup->flexible_in_time ?? 0,
                 'flexible_out_time' => $employeeGroup->flexible_out_time ?? 0,
-                'division_name_en' => $divisionName,
-                'district_name_en' => $districtName,
-                'upazila_name_en' => $upazilaName,
+                'division_name_en' => isset($employeeData['division_id']) ? 
+                    $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
+                'district_name_en' => isset($employeeData['district_id']) ? 
+                    $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
+                'upazila_name_en' => isset($employeeData['upazilla_id']) ? 
+                    $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
                 'division_id' => $employeeData['division_id'] ?? null,
                 'district_id' => $employeeData['district_id'] ?? null,
                 'upazila_id' => $employeeData['upazilla_id'] ?? null,
             ];
         });
-    }
-
-    /**
-     * Fetch employee details from external service
-     */
-    private function fetchEmployeeDetails($personType, $profileId)
-    {
-        $endpoint = match ($personType) {
-            1 => 'teacherAsEmp',
-            2 => 'staffAsEmp',
-            3 => 'studentAsEmp',
-            default => null,
-        };
-
-        if (!$endpoint) return [];
-
-        $url = "{$this->baseUrl}/api/v3/{$endpoint}/{$profileId}";
-        Log::info("Fetching employee from URL: {$url}");
-
-        try {
-            $response = Http::timeout(10)->get($url);
-            
-            if ($response->successful()) {
-                $data = $response->json('data') ?? [];
-                Log::info("Employee API Success - Profile: {$profileId}");
-                return $data;
-            } else {
-                Log::warning('Employee API failed', [
-                    'url' => $url,
-                    'status' => $response->status(),
-                ]);
-            }
-        } catch (\Throwable $e) {
-            Log::error('Employee API exception', [
-                'url' => $url, 
-                'error' => $e->getMessage(),
-            ]);
-        }
-
-        return [];
-    }
-
-    /**
-     * Fetch division name from external service
-     */
-    private function fetchDivisionName($divisionId)
-    {
-        $url = "{$this->baseUrl}/api/v3/division/{$divisionId}";
-        try {
-            $response = Http::timeout(6)->get($url);
-            if ($response->successful()) {
-                $data = $response->json('data');
-                return $data['division_name_en'] ?? $data['division_name'] ?? $divisionId;
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching division', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-        return $divisionId;
-    }
-
-    /**
-     * Fetch district name from external service
-     */
-    private function fetchDistrictName($districtId)
-    {
-        $url = "{$this->baseUrl}/api/v3/district/{$districtId}";
-        try {
-            $response = Http::timeout(6)->get($url);
-            if ($response->successful()) {
-                $data = $response->json('data');
-                return $data['district_name_en'] ?? $data['district_name'] ?? $districtId;
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching district', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-        return $districtId;
-    }
-
-    /**
-     * Fetch upazila name from external service
-     */
-    private function fetchUpazilaName($upazilaId)
-    {
-        $url = "{$this->baseUrl}/api/v3/upazila/{$upazilaId}";
-        try {
-            $response = Http::timeout(6)->get($url);
-            if ($response->successful()) {
-                $data = $response->json('data');
-                return $data['upazila_name_en'] ?? $data['upazila_name'] ?? $upazilaId;
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching upazila', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-        return $upazilaId;
-    }
-
-    /**
-     * Get attendance data from external service
-     */
-    private function getAttendanceData(array $profileIds, Carbon $start, Carbon $end)
-    {
-        // This would need to be implemented based on your external attendance service
-        // For now, returning empty collection as placeholder
-        Log::info("Fetching attendance data for profiles: " . implode(', ', $profileIds));
-        Log::info("Date range: {$start->toDateString()} to {$end->toDateString()}");
-
-        // Placeholder - implement based on your external attendance API
-        return collect();
     }
 
     /**
@@ -456,7 +293,7 @@ class AttendanceController extends Controller
 
         // Holiday check
         $isHoliday = Holiday::where('status', 1)
-            ->where('branch_id', $branchId)
+            ->where('branch_uid', $branchId)
             ->whereDate('start_date', '<=', $currentDate)
             ->where(function ($query) use ($currentDate) {
                 $query
@@ -507,5 +344,19 @@ class AttendanceController extends Controller
             'overtime_minutes' => 0,
             'overtime' => '00:00'
         ];
+    }
+
+    /**
+     * Determine report type
+     */
+    private function getReportType(array $validated, Carbon $start, Carbon $end): int
+    {
+        if (!empty($validated['month'])) {
+            return 3;  // Month
+        } elseif ($start->eq($end)) {
+            return 1;  // Single day
+        } else {
+            return 2;  // Multiple dates
+        }
     }
 }

@@ -24,4 +24,17 @@ class DistrictRepository extends BaseRepository
     {
         return $this->getAll()->where('division_id', $divisionId)->values();
     }
+
+     public function getDistrictDetails($districtId)
+    {
+        $url = "{$this->baseUrl}/api/v3/district/{$districtId}";
+        return $this->makeApiCall($url);
+    }
+
+    //   public function getDistrictsByDivision($divisionId)
+    // {
+    //     $url = "{$this->baseUrl}/api/v3/division/{$divisionId}/districts";
+    //     return $this->makeApiCall($url);
+    // }
+
 }

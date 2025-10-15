@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Support\ServiceProvider;
 use App\Services\DropdownService;
+use App\Services\ExternalDataService;
 use App\Repositories\BranchRepository;
 use App\Repositories\ShiftRepository;
 use App\Repositories\DivisionRepository;
@@ -19,7 +20,7 @@ class AppServiceProvider extends ServiceProvider
    public function register()
     {
         $this->app->singleton(DropdownService::class, function ($app) {
-            return new DropdownService(   // here, i am getting Undefined type 'App\Services\DropdownService'.?
+            return new DropdownService(   
                 $app->make(BranchRepository::class),
                 $app->make(ShiftRepository::class),
                 $app->make(DivisionRepository::class),
@@ -27,6 +28,7 @@ class AppServiceProvider extends ServiceProvider
                 $app->make(UpazilaRepository::class)
             );
         });
+       
     }
 
     /**

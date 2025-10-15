@@ -58,15 +58,15 @@
                             <!-- Branch Selection -->
                             <div class="col-md-3 mb-3">
                                 <div class="form-group">
-                                    <label for="branch_id">Select Branch <span class="text-danger">*</span></label>
-                                    <select id="branch_id"
-                                            name="branch_id"
+                                    <label for="branch_uid">Select Branch <span class="text-danger">*</span></label>
+                                    <select id="branch_uid"
+                                            name="branch_uid"
                                             class="form-control select2bs4"
                                             style="width: 100%;"
                                             required>
                                         <option value="">-- Choose Branch --</option>
                                         @foreach ($branches as $branch)
-                                            <option value="{{ $branch['id'] }}">{{ $branch['branch_name_en'] }}</option>
+                                            <option value="{{ $branch['branch_uid'] }}">{{ $branch['branch_name_en'] }}</option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -75,9 +75,9 @@
                             <!-- Shift Selection (populated based on selected branch) -->
                             <div class="col-md-3 mb-3">
                                 <div class="form-group">
-                                    <label for="shift_id">Select Shift <span class="text-danger">*</span></label>
-                                    <select id="shift_id"
-                                            name="shift_id"
+                                    <label for="shift_uid">Select Shift <span class="text-danger">*</span></label>
+                                    <select id="shift_uid"
+                                            name="shift_uid"
                                             class="form-control select2bs4"
                                             style="width: 100%;"
                                             required
@@ -216,15 +216,15 @@
         
         myJQ(function() {
             // ========== BRANCH & SHIFTS (No AJAX - all data loaded) ==========
-            myJQ('#branch_id').on('change', function() {
+            myJQ('#branch_uid').on('change', function() {
                 const branchId = myJQ(this).val();
-                const shiftSelect = myJQ('#shift_id');
+                const shiftSelect = myJQ('#shift_uid');
                 
                 shiftSelect.empty().append('<option value="">-- Choose Shift --</option>');
                 
                 if (branchId) {
                     // Filter shifts by selected branch from pre-loaded data
-                    const branchShifts = shiftsData.filter(shift => shift.branch_id == branchId);
+                    const branchShifts = shiftsData.filter(shift => shift.branch_uid == branchId);
                     
                     if (branchShifts.length > 0) {
                         branchShifts.forEach(shift => {
@@ -381,12 +381,12 @@
                 // Clear all form fields
                 myJQ('#date_range').val('').prop('disabled', false);
                 myJQ('#month').val('').prop('disabled', false);
-                myJQ('#branch_id').val('').trigger('change');
+                myJQ('#branch_uid').val('').trigger('change');
                 myJQ('#division_id').val('').trigger('change');
                 myJQ('#group_id').val('');
                 
                 // Reset dropdowns
-                myJQ('#shift_id').empty().append('<option value="">-- Choose Shift --</option>').prop('disabled', true);
+                myJQ('#shift_uid').empty().append('<option value="">-- Choose Shift --</option>').prop('disabled', true);
                 myJQ('#district_id').empty().append('<option value="">-- Choose District --</option>').prop('disabled', true);
                 myJQ('#upazila_id').empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
                 

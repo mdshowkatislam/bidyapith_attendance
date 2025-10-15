@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 12, 2025 at 10:11 AM
+-- Generation Time: Oct 15, 2025 at 12:43 PM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -354,6 +354,8 @@ CREATE TABLE IF NOT EXISTS `employees` (
   `person_type` tinyint NOT NULL COMMENT '1 = Teacher, 2 = Staff, 3 = Student',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
+  `designation_id` int DEFAULT NULL,
+  `designation_name` varchar(255) COLLATE utf8mb3_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `employees_profile_id_unique` (`profile_id`),
   UNIQUE KEY `employees_caid_unique` (`caid`)
@@ -363,13 +365,13 @@ CREATE TABLE IF NOT EXISTS `employees` (
 -- Dumping data for table `employees`
 --
 
-INSERT INTO `employees` (`id`, `eiin`, `caid`, `profile_id`, `person_type`, `created_at`, `updated_at`) VALUES
-(1, 134172, 113417220240078, 64, 1, '2025-10-07 05:53:06', '2025-10-07 05:53:06'),
-(2, 134172, 113417220240079, 58, 1, '2025-10-07 06:25:42', '2025-10-07 06:25:42'),
-(3, 134172, 113417220240080, 55, 1, '2025-10-07 06:26:35', '2025-10-07 06:26:35'),
-(4, 134172, 6122270001, 62, 1, '2025-10-07 06:31:20', '2025-10-07 06:31:20'),
-(5, 134172, 6340020001, 59, 2, '2025-10-07 06:32:28', '2025-10-07 06:32:28'),
-(6, 134172, 6481220001, 57, 2, '2025-10-07 06:33:55', '2025-10-07 06:33:55');
+INSERT INTO `employees` (`id`, `eiin`, `caid`, `profile_id`, `person_type`, `created_at`, `updated_at`, `designation_id`, `designation_name`) VALUES
+(1, 134172, 113417220240078, 64, 1, '2025-10-07 05:53:06', '2025-10-07 05:53:06', 10, 'Senior Teacher'),
+(2, 134172, 113417220240079, 58, 1, '2025-10-07 06:25:42', '2025-10-07 06:25:42', 8, 'Senior Assistant Teacher'),
+(3, 134172, 113417220240080, 55, 1, '2025-10-07 06:26:35', '2025-10-07 06:26:35', 7, 'Assistant Head Teacher'),
+(4, 134172, 113417220240072, 62, 1, '2025-10-07 06:31:20', '2025-10-07 06:31:20', 3, 'Senior Assistant Teacher'),
+(5, 134172, 6340020001, 59, 2, '2025-10-07 06:32:28', '2025-10-07 06:32:28', NULL, NULL),
+(6, 134172, 6481220001, 57, 2, '2025-10-07 06:33:55', '2025-10-07 06:33:55', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -428,25 +430,23 @@ CREATE TABLE IF NOT EXISTS `groups` (
   `id` bigint UNSIGNED NOT NULL AUTO_INCREMENT,
   `group_name` varchar(255) COLLATE utf8mb3_unicode_ci NOT NULL,
   `description` text COLLATE utf8mb3_unicode_ci,
-  `branch_id` bigint UNSIGNED NOT NULL,
-  `shift_id` bigint UNSIGNED NOT NULL,
+  `branch_uid` bigint UNSIGNED NOT NULL,
+  `shift_uid` bigint UNSIGNED NOT NULL,
   `status` tinyint NOT NULL DEFAULT '1',
   `flexible_in_time` int DEFAULT NULL,
   `flexible_out_time` int DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `groups_group_name_unique` (`group_name`),
-  KEY `groups_branch_id_foreign` (`branch_id`),
-  KEY `groups_shift_id_foreign` (`shift_id`)
+  UNIQUE KEY `groups_group_name_unique` (`group_name`)
 ) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `groups`
 --
 
-INSERT INTO `groups` (`id`, `group_name`, `description`, `branch_id`, `shift_id`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
-(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 8, 1, 1, 10, 15, '2025-10-12 15:32:10', '2025-10-12 15:32:10');
+INSERT INTO `groups` (`id`, `group_name`, `description`, `branch_uid`, `shift_uid`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
+(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 1845401593211652, 1826392052697612, 1, 10, 15, '2025-10-15 00:09:25', '2025-10-15 00:09:25');
 
 -- --------------------------------------------------------
 
@@ -563,7 +563,7 @@ CREATE TABLE IF NOT EXISTS `migrations` (
   `migration` varchar(255) CHARACTER SET utf8mb3 COLLATE utf8mb3_unicode_ci NOT NULL,
   `batch` int NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=78 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `migrations`
@@ -577,7 +577,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (64, '2025_09_03_113209_create_branches_table', 30),
 (42, '2025_07_09_193053_work_days', 23),
 (47, '2025_07_10_110008_employeesOld', 25),
-(74, '2025_07_09_195112_groups', 36),
+(76, '2025_07_09_195112_groups', 38),
 (13, '2025_07_13_085205_work_day_group', 5),
 (24, '2025_07_16_060939_special_working_days', 12),
 (25, '2025_07_16_063955_create_group_special_workdays_table', 13),
@@ -595,7 +595,7 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (69, '2023_09_21_142202_create_teachers_table', 32),
 (70, '2023_09_23_073501_create_students_table', 33),
 (71, '2023_11_04_062551_create_designations_table', 33),
-(72, '2025_09_25_081010_add_designation_to_employee_table', 34),
+(77, '2025_09_25_081010_add_designation_to_employee_table', 39),
 (73, '2025_10_07_102426_create_employees_table', 35);
 
 -- --------------------------------------------------------

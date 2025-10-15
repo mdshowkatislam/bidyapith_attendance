@@ -24,4 +24,15 @@ class UpazilaRepository extends BaseRepository
     {
         return $this->getAll()->where('district_id', $districtId)->values();
     }
+     public function getUpazilaDetails($upazilaId)
+    {
+        $url = "{$this->baseUrl}/api/v3/upazila/{$upazilaId}";
+        return $this->makeApiCall($url);
+    }
+
+    // public function getUpazilasByDistrict($districtId)
+    // {
+    //     $url = "{$this->baseUrl}/api/v3/district/{$districtId}/upazilas";
+    //     return $this->makeApiCall($url);
+    // }
 }

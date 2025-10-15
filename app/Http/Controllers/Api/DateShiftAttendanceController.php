@@ -19,16 +19,12 @@ class DateShiftAttendanceController extends Controller
     }
   public function index()
     {
-          
-     
         try {
             $data = $this->dropdownService->getAllDropdownData();
     
             return response()->json($data);
             
         } catch (\Exception $e) {
-           
-     
             \Log::error('Error in index method: ' . $e->getMessage());
             return response()->json([
                 'error' => 'Failed to fetch data',
@@ -40,7 +36,7 @@ class DateShiftAttendanceController extends Controller
     // Additional endpoints for dependent dropdowns
     public function getShiftsByBranch($branchUid)
     {
-            \Log::error(qqq);
+   
         try {
             $shifts = $this->dropdownService->getShiftsByBranch($branchUid);
             return response()->json(['shifts' => $shifts]);
@@ -50,7 +46,7 @@ class DateShiftAttendanceController extends Controller
     }
 
     public function getDistrictsByDivision($divisionId)
-    { \Log::error(qqq1);
+    { 
         try {
             $districts = $this->dropdownService->getDistrictsByDivision($divisionId);
             return response()->json(['districts' => $districts]);
@@ -60,7 +56,7 @@ class DateShiftAttendanceController extends Controller
     }
 
     public function getUpazilasByDistrict($districtId)
-    { \Log::error(qqq2 );
+    { 
         try {
             $upazilas = $this->dropdownService->getUpazilasByDistrict($districtId);
             return response()->json(['upazilas' => $upazilas]);

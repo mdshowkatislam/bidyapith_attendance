@@ -35,6 +35,7 @@ class BaseDateShiftAttendanceController extends Controller
     public function reportGenarate(Request $request)
     {
         $queryParams = $request->all();
+        \Log::info("hhh");
         \Log::info($queryParams);
 
         $response = Http::withHeaders([

@@ -66,7 +66,8 @@
                                             required>
                                         <option value="">-- Choose Branch --</option>
                                         @foreach ($branches as $branch)
-                                            <option value="{{ $branch['branch_uid'] }}">{{ $branch['branch_name_en'] }}</option>
+                                            <option value="{{ $branch['branch_uid'] }}">{{ $branch['branch_name_en'] }}
+                                            </option>
                                         @endforeach
                                     </select>
                                 </div>
@@ -213,26 +214,35 @@
         const upazilasData = @json($upazilas);
 
         var myJQ = $.noConflict(true);
-        
+
         myJQ(function() {
             // ========== BRANCH & SHIFTS (No AJAX - all data loaded) ==========
             myJQ('#branch_uid').on('change', function() {
                 const branchId = myJQ(this).val();
                 const shiftSelect = myJQ('#shift_uid');
-                
+
+                console.log("hi3");
+                console.log(shiftsData);
+
                 shiftSelect.empty().append('<option value="">-- Choose Shift --</option>');
-                
+
                 if (branchId) {
                     // Filter shifts by selected branch from pre-loaded data
                     const branchShifts = shiftsData.filter(shift => shift.branch_uid == branchId);
-                    
+
                     if (branchShifts.length > 0) {
                         branchShifts.forEach(shift => {
+                            console.log("hi5");
+                            console.log(shift);
                             shiftSelect.append(
-                                myJQ('<option>', {
-                                    value: shift.id,
-                                    text: shift.shift_name_en + ' (' + shift.shift_start_time + ' - ' + shift.shift_end_time + ')'
+                                myJQ('<option>', {   //p-1: just fix this below codes of this funtion ? 
+                                    value: shift.shift_uid,
+                                    text: shift.shift_name_en + ' (' + shift
+                                    .shift_start_time + ' - ' + shift.shift_end_time +')'
+
+                                 
                                 })
+
                             );
                         });
                         shiftSelect.prop('disabled', false);
@@ -250,14 +260,17 @@
                 const divisionId = myJQ(this).val();
                 const districtSelect = myJQ('#district_id');
                 const upazilaSelect = myJQ('#upazila_id');
-                
-                districtSelect.empty().append('<option value="">-- Choose District --</option>').prop('disabled', true);
-                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
+
+                districtSelect.empty().append('<option value="">-- Choose District --</option>').prop(
+                    'disabled', true);
+                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop(
+                    'disabled', true);
 
                 if (divisionId) {
                     // Filter districts by division from pre-loaded data
-                    const divisionDistricts = districtsData.filter(district => district.division_id == divisionId);
-                    
+                    const divisionDistricts = districtsData.filter(district => district.division_id ==
+                        divisionId);
+
                     if (divisionDistricts.length > 0) {
                         divisionDistricts.forEach(district => {
                             districtSelect.append(
@@ -278,13 +291,15 @@
             myJQ('#district_id').on('change', function() {
                 const districtId = myJQ(this).val();
                 const upazilaSelect = myJQ('#upazila_id');
-                
-                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
+
+                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop(
+                    'disabled', true);
 
                 if (districtId) {
                     // Filter upazilas by district from pre-loaded data
-                    const districtUpazilas = upazilasData.filter(upazila => upazila.district_id == districtId);
-                    
+                    const districtUpazilas = upazilasData.filter(upazila => upazila.district_id ==
+                        districtId);
+
                     if (districtUpazilas.length > 0) {
                         districtUpazilas.forEach(upazila => {
                             upazilaSelect.append(
@@ -344,7 +359,8 @@
 
             // Date range events
             myJQ('#date_range').on('apply.daterangepicker', function(ev, picker) {
-                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
+                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format(
+                    'YYYY-MM-DD'));
                 if (myJQ(this).val()) {
                     myJQ('#month').val('').prop('disabled', true);
                 } else {
@@ -384,12 +400,15 @@
                 myJQ('#branch_uid').val('').trigger('change');
                 myJQ('#division_id').val('').trigger('change');
                 myJQ('#group_id').val('');
-                
+
                 // Reset dropdowns
-                myJQ('#shift_uid').empty().append('<option value="">-- Choose Shift --</option>').prop('disabled', true);
-                myJQ('#district_id').empty().append('<option value="">-- Choose District --</option>').prop('disabled', true);
-                myJQ('#upazila_id').empty().append('<option value="">-- Choose Upazila --</option>').prop('disabled', true);
-                
+                myJQ('#shift_uid').empty().append('<option value="">-- Choose Shift --</option>').prop(
+                    'disabled', true);
+                myJQ('#district_id').empty().append('<option value="">-- Choose District --</option>').prop(
+                    'disabled', true);
+                myJQ('#upazila_id').empty().append('<option value="">-- Choose Upazila --</option>').prop(
+                    'disabled', true);
+
                 toggleClearButton('#date_range', '#clear-date_range');
                 toggleClearButton('#month', '#clear-month');
             });

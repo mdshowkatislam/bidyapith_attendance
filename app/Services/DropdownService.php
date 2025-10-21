@@ -33,8 +33,7 @@ class DropdownService
 
     public function getAllDropdownData(): array
     {
-        \Log::info('bbbb');
-        \Log::info($this->shiftRepository->getAll()->values()->toArray());
+      
         return [
             'branches' => $this->branchRepository->getAll()->values()->toArray(),
             'shifts' => $this->shiftRepository->getAll()->values()->toArray(),

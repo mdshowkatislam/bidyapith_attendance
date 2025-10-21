@@ -14,7 +14,8 @@ class Employee extends Model
         'caid',
         'person_type'
     ];
-// FOR BETTER USE IN CONTROLLER . ->where('person', Employee::TYPE_TEACHER )
+
+    // FOR BETTER USE IN CONTROLLER . ->where('person', Employee::TYPE_TEACHER )
     const TYPE_TEACHER = 1;
     const TYPE_STAFF = 2;
     const TYPE_STUDENT = 3;
@@ -43,8 +44,8 @@ class Employee extends Model
         return $this->belongsTo(Division::class);
     }
 
-   public function groups()
-{
-    return $this->belongsToMany(Group::class, 'employee_group', 'employee_emp_id', 'group_id', 'profile_id', 'id');
-}
+    public function groups()
+    {
+        return $this->belongsToMany(Group::class, 'employee_group', 'employee_emp_id', 'group_id', 'profile_id', 'id');
+    }
 }

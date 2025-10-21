@@ -47,6 +47,7 @@ class ExternalDataService
     {
         return $this->employeeRepository->getEmployeeDetails($personType, $profileId);
     }
+ 
 
     /**
      * Fetch shift details
@@ -138,4 +139,11 @@ class ExternalDataService
     // {
     //     return $this->shiftRepository->branchUid($branchUid);
     // }
+
+  public function fetchFilteredEmployees(array $filters = [])
+    {
+        $response = $this->employeeRepository->getFilteredEmployees($filters);
+        return $response['data'] ?? [];
+    }
+
 }

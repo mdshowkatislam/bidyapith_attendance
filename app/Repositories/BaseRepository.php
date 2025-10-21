@@ -18,13 +18,39 @@ abstract class BaseRepository
     {
         try {
             $response = Http::timeout($timeout)->get($url);
+
             if ($response->successful()) {
-                return $response->json('data') ?? [];
+                // Log the full raw body for debugging
+                // Log::info("Raw API response from {$url}:", [
+                //     'body' => $response->body(),
+                // ]);
+
+                // Extract only 'data'
+                $data = $response->json('data') ?? [];
+
+                // If 'data' is empty, log a warning
+                if (empty($data)) {
+                    Log::warning("API responded successfully but 'data' is empty", [
+                        'url' => $url,
+                        'response_json' => $response->json(),
+                    ]);
+                }
+
+                return $data;
             }
-            Log::warning("API call failed", ['url' => $url, 'status' => $response->status()]);
+
+            // Log::warning('API call failed', [
+            //     'url' => $url,
+            //     'status' => $response->status(),
+            //     'body' => $response->body(),
+            // ]);
         } catch (\Throwable $e) {
-            Log::error("API call exception", ['url' => $url, 'error' => $e->getMessage()]);
+            Log::error('API call exception', [
+                'url' => $url,
+                'error' => $e->getMessage(),
+            ]);
         }
+
         return [];
     }
 }

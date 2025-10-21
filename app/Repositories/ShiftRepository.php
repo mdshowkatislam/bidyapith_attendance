@@ -30,7 +30,6 @@ class ShiftRepository extends BaseRepository
      public function getShiftDetails($shiftUid)
     {
         $url = "{$this->baseUrl}/api/v3/shift/{$shiftUid}";
-        \Log::info("Fetching shift from URL: {$url}");
         return $this->makeApiCall($url);
     }
 

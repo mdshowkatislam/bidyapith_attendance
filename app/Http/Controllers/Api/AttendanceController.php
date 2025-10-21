@@ -23,14 +23,13 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
-        \Log::info("kkkj");
-        // \Log::info('exit');
+       
         try {
          
             // Validate only local fields
             $validated = $request->validate([
-                'branch_uid' => 'required|integer',
-                'shift_uid' => 'required|integer',
+                'branch_uid' => 'required',
+                'shift_uid' => 'required',
                 'date_range' => 'nullable|string|required_without:month',
                 'month' => 'nullable|date_format:Y-m|required_without:date_range',
                 'upazila_id' => 'nullable|integer',
@@ -38,7 +37,7 @@ class AttendanceController extends Controller
                 'division_id' => 'nullable|integer',
                 'group_id' => 'nullable|integer|exists:groups,id',
             ]);
- \Log::info("www");
+
             // Parse date range or month
             [$start, $end] = $this->getDateRangeFromRequest($validated);
 
@@ -56,7 +55,7 @@ class AttendanceController extends Controller
             if (!$branch) {
                 return response()->json(['error' => 'Branch not found'], 404);
             }
- \Log::info("+++");
+
             // Get employees filtered by branch, shift and other criteria
             $employees = $this->getFilteredEmployees($validated, $branch, $shift);
 
@@ -100,7 +99,6 @@ class AttendanceController extends Controller
     private function getDateRangeFromRequest(array $validated): array
 
     {
-         \Log::info("qqq");
         if (!empty($validated['date_range']) && str_contains($validated['date_range'], ' - ')) {
             [$start, $end] = explode(' - ', $validated['date_range'], 2);
             return [
@@ -122,78 +120,104 @@ class AttendanceController extends Controller
     /**
      * Get employees filtered by branch, shift and other criteria
      */
-    private function getFilteredEmployees(array $validated, array $branch, array $shift)
-    {
-        \Log::info("jjj");
-        \Log::info($validated);
-        \Log::info( $branch);
-        \Log::info($shift);
-       
-        
-        $query = Group::where('branch_uid', $validated['branch_uid'])
-                     ->where('shift_uid', $validated['shift_uid']);
+    /**
+ * Get employees filtered by branch, shift and other criteria
+ */
+private function getFilteredEmployees(array $validated, array $branch, array $shift)
+{ 
+    
+  
+    // 1️⃣ Fetch groups for this branch + shift
+    $query = Group::where('branch_uid', $validated['branch_uid'])
+                 ->where('shift_uid', $validated['shift_uid']);
 
-        // If specific group is selected, filter by that group only
-        if (!empty($validated['group_id'])) {
-            $query->where('id', $validated['group_id']);
-        }
-
-        $groups = $query->get();
-        $groupIds = $groups->pluck('id')->toArray();
-
-        if (empty($groupIds)) {
-            return collect();
-        }
-
-        // Base query for employees
-        $employeeQuery = Employee::whereHas('groups', function ($query) use ($groupIds) {
-            $query->whereIn('groups.id', $groupIds);
-        });
-
-        // Apply location filters
-        if (!empty($validated['upazila_id'])) {
-            $employeeQuery->where('upazila_id', $validated['upazila_id']);
-        } elseif (!empty($validated['district_id'])) {
-            $employeeQuery->where('district_id', $validated['district_id']);
-        } elseif (!empty($validated['division_id'])) {
-            $employeeQuery->where('division_id', $validated['division_id']);
-        }
-
-        $employees = $employeeQuery->get();
-
-        // Enrich employee data with external API details
-        return $employees->map(function ($employee) use ($groups) {
-            $employeeGroup = $employee->groups->first();
-            
-            // Fetch employee details from external API using service
-            $employeeData = $this->externalDataService->fetchEmployeeDetails(
-                $employee->person_type, 
-                $employee->profile_id
-            );
-
-            return (object) [
-                'id' => $employee->id,
-                'profile_id' => $employee->profile_id,
-                'name' => $employeeData['name_en'] ?? $employee->name,
-                'person_type' => $employee->person_type,
-                'group_id' => $employeeGroup->id,
-                'group_name' => $employeeGroup->group_name,
-                'start_time' => $employeeGroup->shift->shift_start_time ?? '09:00',
-                'end_time' => $employeeGroup->shift->shift_end_time ?? '17:00',
-                'flexible_in_time' => $employeeGroup->flexible_in_time ?? 0,
-                'flexible_out_time' => $employeeGroup->flexible_out_time ?? 0,
-                'division_name_en' => isset($employeeData['division_id']) ? 
-                    $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
-                'district_name_en' => isset($employeeData['district_id']) ? 
-                    $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
-                'upazila_name_en' => isset($employeeData['upazilla_id']) ? 
-                    $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
-                'division_id' => $employeeData['division_id'] ?? null,
-                'district_id' => $employeeData['district_id'] ?? null,
-                'upazila_id' => $employeeData['upazilla_id'] ?? null,
-            ];
-        });
+    if (!empty($validated['group_id'])) {
+        $query->where('id', $validated['group_id']);
     }
+
+    $groups = $query->get();
+    $groupIds = $groups->pluck('id')->toArray();
+
+    if (empty($groupIds)) {
+        Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
+        return collect();
+    }
+
+  // 2️⃣ Prepare filters to send to the external system
+$employeeProfileIds = DB::table('employee_group')
+    ->whereIn('group_id', $groupIds)
+    ->pluck('employee_emp_id')
+    ->filter()
+    ->unique()
+    ->values()
+    ->toArray();
+
+if (empty($employeeProfileIds)) {
+    Log::warning("No employees found in pivot table for groups", ['group_ids' => $groupIds]);
+    return collect();
+}
+
+$filterPayload = [
+    'person_type'  => 1, // teachers; you can generalize later for staff/student
+    'district_id'  => $validated['district_id'] ?? null,
+    'division_id'  => $validated['division_id'] ?? null,
+    'upazila_id'   => $validated['upazila_id'] ?? null,
+    'profile_ids'  => $employeeProfileIds,
+];
+
+// 3️⃣ Call external API
+$externalFiltered = $this->externalDataService->fetchFilteredEmployees($filterPayload);
+    
+    Log::info("jjj4");
+
+    if (empty($externalFiltered)) {
+        Log::info("No employees matched external filters", $filterPayload);
+        return collect();
+    }
+
+    // 4️⃣ Match local employees based on returned profile IDs
+    $employees = Employee::whereIn('profile_id', $externalFiltered)->get();
+
+    Log::info("bbb");
+    Log::info("Filtered employees count: " . $employees->count());
+
+    // 5️⃣ Enrich employee data using external service
+    return $employees->map(function ($employee) use ($groups) {
+        $employeeGroup = $employee->groups->first();
+
+        if (!$employeeGroup) {
+            Log::warning("Employee {$employee->id} has no group association");
+            return null;
+        }
+
+        $employeeData = $this->externalDataService->fetchEmployeeDetails(
+            $employee->person_type,
+            $employee->profile_id
+        );
+
+        return (object) [
+            'id' => $employee->id,
+            'profile_id' => $employee->profile_id,
+            'name' => $employeeData['name_en'] ?? $employee->name,
+            'person_type' => $employee->person_type,
+            'group_id' => $employeeGroup->id,
+            'group_name' => $employeeGroup->group_name,
+            'start_time' => $employeeGroup->shift->shift_start_time ?? '09:00',
+            'end_time' => $employeeGroup->shift->shift_end_time ?? '17:00',
+            'flexible_in_time' => $employeeGroup->flexible_in_time ?? 0,
+            'flexible_out_time' => $employeeGroup->flexible_out_time ?? 0,
+            'division_name_en' => isset($employeeData['division_id']) ? 
+                $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
+            'district_name_en' => isset($employeeData['district_id']) ? 
+                $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
+            'upazila_name_en' => isset($employeeData['upazilla_id']) ? 
+                $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
+            'division_id' => $employeeData['division_id'] ?? null,
+            'district_id' => $employeeData['district_id'] ?? null,
+            'upazila_id' => $employeeData['upazilla_id'] ?? null,
+        ];
+    })->filter();
+}
 
     /**
      * Build final attendance results
@@ -247,7 +271,8 @@ class AttendanceController extends Controller
                 'description' => "$dayName not defined in work_days table"
             ];
         }
-
+Log::info("999");
+Log::info($branchId);
         $weekdayId = $workDay->id;
 
         // Get groups for this branch and shift

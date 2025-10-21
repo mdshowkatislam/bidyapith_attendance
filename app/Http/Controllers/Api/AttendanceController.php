@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ExternalDataService;
 use App\Models\Employee;
 use App\Models\Group;
 use App\Models\Holiday;
+use App\Services\ExternalDataService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,9 +23,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
-       
         try {
-         
             // Validate only local fields
             $validated = $request->validate([
                 'branch_uid' => 'required',
@@ -43,10 +41,8 @@ class AttendanceController extends Controller
 
             // Get shift details from external service
             $shift = $this->externalDataService->fetchShiftDetails($validated['shift_uid']);
-         
 
             if (!$shift) {
-                
                 return response()->json(['error' => 'Shift not found'], 404);
             }
 
@@ -97,7 +93,6 @@ class AttendanceController extends Controller
      * Extract date range from request (either date_range or month)
      */
     private function getDateRangeFromRequest(array $validated): array
-
     {
         if (!empty($validated['date_range']) && str_contains($validated['date_range'], ' - ')) {
             [$start, $end] = explode(' - ', $validated['date_range'], 2);
@@ -117,107 +112,106 @@ class AttendanceController extends Controller
         abort(400, 'Either date_range or month must be provided.');
     }
 
+    /** Get employees filtered by branch, shift and other criteria */
+
     /**
      * Get employees filtered by branch, shift and other criteria
      */
-    /**
- * Get employees filtered by branch, shift and other criteria
- */
-private function getFilteredEmployees(array $validated, array $branch, array $shift)
-{ 
-    
-  
-    // 1️⃣ Fetch groups for this branch + shift
-    $query = Group::where('branch_uid', $validated['branch_uid'])
-                 ->where('shift_uid', $validated['shift_uid']);
+    private function getFilteredEmployees(array $validated, array $branch, array $shift)
+    {
+        // 1️⃣ Fetch groups for this branch + shift
+        $query = Group::where('branch_uid', $validated['branch_uid'])
+            ->where('shift_uid', $validated['shift_uid']);
 
-    if (!empty($validated['group_id'])) {
-        $query->where('id', $validated['group_id']);
-    }
-
-    $groups = $query->get();
-    $groupIds = $groups->pluck('id')->toArray();
-
-    if (empty($groupIds)) {
-        Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
-        return collect();
-    }
-
-  // 2️⃣ Prepare filters to send to the external system
-$employeeProfileIds = DB::table('employee_group')
-    ->whereIn('group_id', $groupIds)
-    ->pluck('employee_emp_id')
-    ->filter()
-    ->unique()
-    ->values()
-    ->toArray();
-
-if (empty($employeeProfileIds)) {
-    Log::warning("No employees found in pivot table for groups", ['group_ids' => $groupIds]);
-    return collect();
-}
-
-$filterPayload = [
-    'person_type'  => 1, // teachers; you can generalize later for staff/student
-    'district_id'  => $validated['district_id'] ?? null,
-    'division_id'  => $validated['division_id'] ?? null,
-    'upazila_id'   => $validated['upazila_id'] ?? null,
-    'profile_ids'  => $employeeProfileIds,
-];
-
-// 3️⃣ Call external API
-$externalFiltered = $this->externalDataService->fetchFilteredEmployees($filterPayload);
-    
-    Log::info("jjj4");
-
-    if (empty($externalFiltered)) {
-        Log::info("No employees matched external filters", $filterPayload);
-        return collect();
-    }
-
-    // 4️⃣ Match local employees based on returned profile IDs
-    $employees = Employee::whereIn('profile_id', $externalFiltered)->get();
-
-    Log::info("bbb");
-    Log::info("Filtered employees count: " . $employees->count());
-
-    // 5️⃣ Enrich employee data using external service
-    return $employees->map(function ($employee) use ($groups) {
-        $employeeGroup = $employee->groups->first();
-
-        if (!$employeeGroup) {
-            Log::warning("Employee {$employee->id} has no group association");
-            return null;
+        if (!empty($validated['group_id'])) {
+            $query->where('id', $validated['group_id']);
         }
 
-        $employeeData = $this->externalDataService->fetchEmployeeDetails(
-            $employee->person_type,
-            $employee->profile_id
-        );
+        $groups = $query->get();
+        $groupIds = $groups->pluck('id')->toArray();
 
-        return (object) [
-            'id' => $employee->id,
-            'profile_id' => $employee->profile_id,
-            'name' => $employeeData['name_en'] ?? $employee->name,
-            'person_type' => $employee->person_type,
-            'group_id' => $employeeGroup->id,
-            'group_name' => $employeeGroup->group_name,
-            'start_time' => $employeeGroup->shift->shift_start_time ?? '09:00',
-            'end_time' => $employeeGroup->shift->shift_end_time ?? '17:00',
-            'flexible_in_time' => $employeeGroup->flexible_in_time ?? 0,
-            'flexible_out_time' => $employeeGroup->flexible_out_time ?? 0,
-            'division_name_en' => isset($employeeData['division_id']) ? 
-                $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
-            'district_name_en' => isset($employeeData['district_id']) ? 
-                $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
-            'upazila_name_en' => isset($employeeData['upazilla_id']) ? 
-                $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
-            'division_id' => $employeeData['division_id'] ?? null,
-            'district_id' => $employeeData['district_id'] ?? null,
-            'upazila_id' => $employeeData['upazilla_id'] ?? null,
+        if (empty($groupIds)) {
+            Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
+            return collect();
+        }
+
+        // 2️⃣ Prepare filters to send to the external system
+        $employeeProfileIds = DB::table('employee_group')
+            ->whereIn('group_id', $groupIds)
+            ->pluck('employee_emp_id')
+            ->filter()
+            ->unique()
+            ->values()
+            ->toArray();
+
+        if (empty($employeeProfileIds)) {
+            Log::warning('No employees found in pivot table for groups', ['group_ids' => $groupIds]);
+            return collect();
+        }
+
+        $filterPayload = [
+            'person_type' => 1,  // teachers; you can generalize later for staff/student
+            'district_id' => $validated['district_id'] ?? null,
+            'division_id' => $validated['division_id'] ?? null,
+            'upazila_id' => $validated['upazila_id'] ?? null,
+            'profile_ids' => $employeeProfileIds,
         ];
-    })->filter();
-}
+
+        // 3️⃣ Call external API
+        $externalFiltered = $this->externalDataService->fetchFilteredEmployees($filterPayload);
+
+
+        if (empty($externalFiltered)) {
+            Log::info('No employees matched external filters', $filterPayload);
+            return collect();
+        }
+
+        // 4️⃣ Match local employees based on returned profile IDs
+        $employees = Employee::whereIn('profile_id', $externalFiltered)->get();
+
+        Log::info('bbb');
+        Log::info('Filtered employees count: ' . $employees->count());
+
+        // 5️⃣ Enrich employee data using external service
+        return $employees->map(function ($employee) use ($groups) {
+            $employeeGroup = $employee->groups->first();
+
+            if (!$employeeGroup) {
+                Log::warning("Employee {$employee->id} has no group association");
+                return null;
+            }
+
+            $employeeData = $this->externalDataService->fetchEmployeeDetails(
+                $employee->person_type,
+                $employee->profile_id
+            );
+
+            return (object) [
+                'id' => $employee->id,
+                'profile_id' => $employee->profile_id,
+                'name' => $employeeData['name_en'] ?? $employee->name,
+                'person_type' => $employee->person_type,
+                'group_id' => $employeeGroup->id,
+                'group_name' => $employeeGroup->group_name,
+                'start_time' => $employeeGroup->shift->shift_start_time ?? '09:00',
+                'end_time' => $employeeGroup->shift->shift_end_time ?? '17:00',
+                'flexible_in_time' => $employeeGroup->flexible_in_time ?? 0,
+                'flexible_out_time' => $employeeGroup->flexible_out_time ?? 0,
+                'division_name_en' => isset($employeeData['division_id'])
+                    ? $this->externalDataService->fetchDivisionName($employeeData['division_id'])
+                    : null,
+                'district_name_en' => isset($employeeData['district_id'])
+                    ? $this->externalDataService->fetchDistrictName($employeeData['district_id'])
+                    : null,
+                'upazila_name_en' => isset($employeeData['upazilla_id'])
+                    ? $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id'])
+                    : null,
+                'division_id' => $employeeData['division_id'] ?? null,
+                'district_id' => $employeeData['district_id'] ?? null,
+                'upazila_id' => $employeeData['upazilla_id'] ?? null,
+            ];
+        })->filter();
+    }
 
     /**
      * Build final attendance results
@@ -271,21 +265,21 @@ $externalFiltered = $this->externalDataService->fetchFilteredEmployees($filterPa
                 'description' => "$dayName not defined in work_days table"
             ];
         }
-Log::info("999");
-Log::info($branchId);
+        Log::info('999');
+        Log::info($branchId);
         $weekdayId = $workDay->id;
 
         // Get groups for this branch and shift
         $groups = Group::where('branch_uid', $branchId)
-                      ->where('shift_uid', $shiftId)
-                      ->get();
+            ->where('shift_uid', $shiftId)
+            ->get();
         $groupIds = $groups->pluck('id')->toArray();
 
         if (empty($groupIds)) {
             return [
                 'status' => 'No groups found',
                 'holiday_name' => null,
-                'description' => "No groups configured for this branch and shift"
+                'description' => 'No groups configured for this branch and shift'
             ];
         }
 

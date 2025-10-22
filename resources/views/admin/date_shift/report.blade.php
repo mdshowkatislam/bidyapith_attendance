@@ -94,6 +94,7 @@
             <div class="mb-3"
                  style="font-family:'Times New Roman', Times, serif;font-size:inherit">
                 <strong>Date:</strong> {{ $date }} <br>
+                <strong>Branch:</strong> {{ $branch_name }} <br>
                 <strong>Shift:</strong> {{ $shift_name }} <br>
                 <strong>Day Status:</strong> {{ $status }}
             </div>
@@ -121,10 +122,10 @@
                 <tr>
                     <th style="width:5%;">#</th>
                     <th style="width:10%;">Name</th>
-                    <th style="width:10%;">Group Name</th>
-                    <th style="width:10%;">Division Name</th>
-                    <th style="width:10%;">Department Name</th>
-                    <th style="width:10%;">Section Name</th>
+                    <th style="width:10%;">Group</th>
+                    <th style="width:10%;">Division</th>
+                    <th style="width:10%;">District</th>
+                    <th style="width:10%;">Upazila</th>
                     <th style="width:8%;">In Time</th>
                     <th style="width:8%;">Out Time</th>
                     <th style="width:8%;">Start Time</th>
@@ -143,8 +144,8 @@
                         <td>{{ $employee['name'] }}</td>
                         <td>{{ $employee['group_name'] }}</td>
                         <td>{{ $employee['division'] }}</td>
-                        <td>{{ $employee['department'] }}</td>
-                        <td>{{ $employee['section'] }}</td>
+                        <td>{{ $employee['district'] }}</td>
+                        <td>{{ $employee['upazila'] }}</td>
                         <td>{{ $employee['in_time'] ?? '-' }}</td>
                         <td>{{ $employee['out_time'] ?? '-' }}</td>
                         <td>{{ $employee['start_time'] ?? '-' }}</td>

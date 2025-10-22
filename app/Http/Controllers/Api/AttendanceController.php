@@ -55,13 +55,16 @@ class AttendanceController extends Controller
             // Get employees filtered by branch, shift and other criteria
             $employees = $this->getFilteredEmployees($validated, $branch, $shift);
 
+             Log::info($employees); // this is populated , so why the $attendanceData is empty?
+             Log::info('zzz');
             // Get attendance records for date range from external service
             $attendanceData = $this->externalDataService->fetchAttendanceData(
                 $employees->pluck('profile_id')->toArray(),
                 $start->toDateString(),
                 $end->toDateString()
             );
-
+             Log::info($attendanceData); // why this is also empty array , please check the log error?
+        
             // Build results for each date
             $results = $this->buildAttendanceResults(
                 $employees,
@@ -72,6 +75,9 @@ class AttendanceController extends Controller
                 $validated['branch_uid'],
                 $validated['shift_uid']
             );
+            Log::info('bbb');
+            Log::info($results);
+        
 
             // Determine type
             $type = $this->getReportType($validated, $start, $end);
@@ -131,7 +137,7 @@ class AttendanceController extends Controller
         $groupIds = $groups->pluck('id')->toArray();
 
         if (empty($groupIds)) {
-            Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
+            // Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
             return collect();
         }
 
@@ -151,10 +157,10 @@ class AttendanceController extends Controller
 
         $filterPayload = [
             'person_type' => 1,  // teachers; you can generalize later for staff/student
-            'district_id' => $validated['district_id'] ?? null,
-            'division_id' => $validated['division_id'] ?? null,
-            'upazila_id' => $validated['upazila_id'] ?? null,
-            'profile_ids' => $employeeProfileIds,
+            'district_uid' => $validated['district_id'] ?? null,
+            'division_uid' => $validated['division_id'] ?? null,
+            'upazila_uid' => $validated['upazila_id'] ?? null,
+            'profile_uids' => $employeeProfileIds,
         ];
 
         // 3️⃣ Call external API
@@ -169,8 +175,8 @@ class AttendanceController extends Controller
         // 4️⃣ Match local employees based on returned profile IDs
         $employees = Employee::whereIn('profile_id', $externalFiltered)->get();
 
-        Log::info('bbb');
-        Log::info('Filtered employees count: ' . $employees->count());
+
+        // Log::info('Filtered employees count: ' . $employees->count());
 
         // 5️⃣ Enrich employee data using external service
         return $employees->map(function ($employee) use ($groups) {
@@ -185,6 +191,8 @@ class AttendanceController extends Controller
                 $employee->person_type,
                 $employee->profile_id
             );
+
+  
 
             return (object) [
                 'id' => $employee->id,
@@ -223,6 +231,8 @@ class AttendanceController extends Controller
         for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
             $currentDate = $date->toDateString();
             $dayName = $date->format('l');
+        
+            // Log::info($dayName);
 
             // Determine if it's a working day
             $workdayInfo = $this->checkWorkday($branchId, $shiftId, $dayName, $currentDate);
@@ -265,9 +275,11 @@ class AttendanceController extends Controller
                 'description' => "$dayName not defined in work_days table"
             ];
         }
-        Log::info('999');
-        Log::info($branchId);
+       
+     
+    
         $weekdayId = $workDay->id;
+            //    Log::info( $weekdayId);
 
         // Get groups for this branch and shift
         $groups = Group::where('branch_uid', $branchId)
@@ -290,7 +302,8 @@ class AttendanceController extends Controller
             ->toArray();
 
         $weekdayIsWorkingDay = in_array($weekdayId, $groupWorkDays);
-
+    // Log::info(    $weekdayIsWorkingDay );
+   
         // Check for special working days
         $specialWorkingDates = DB::table('group_special_workdays')
             ->join('special_working_days', 'special_working_days.id', '=', 'group_special_workdays.special_workingday_id')
@@ -312,7 +325,6 @@ class AttendanceController extends Controller
 
         // Holiday check
         $isHoliday = Holiday::where('status', 1)
-            ->where('branch_uid', $branchId)
             ->whereDate('start_date', '<=', $currentDate)
             ->where(function ($query) use ($currentDate) {
                 $query

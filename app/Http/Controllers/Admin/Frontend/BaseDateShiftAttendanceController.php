@@ -35,8 +35,8 @@ class BaseDateShiftAttendanceController extends Controller
     public function reportGenarate(Request $request)
     {
         $queryParams = $request->all();
-        \Log::info("hhh");
-        \Log::info($queryParams);
+
+        // dd( $queryParams);
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
@@ -45,13 +45,14 @@ class BaseDateShiftAttendanceController extends Controller
             ->withOptions(['verify' => false])
             ->get('http://attendance2.localhost.com/api/date/shift/attendance', $queryParams);
 
-          dd($response->json());
+        //   dd( $response->json()['branch'] );
 
         if ($response->json()['type'] == 1) {
             $single_json = $response->json()['results'][0];
-            //  dd( $single_json );
+          
             return view('admin.date_shift.report', [
                 'date' => $single_json['date'] ?? null,
+                'branch_name' => $response->json()['branch']['branch_name']  ?? null,
                 'shift_name' => $single_json['shift_name'] ?? null,
                 'attendance' => $single_json['attendance'] ?? [],
                 'status' => $single_json['status'] ?? null,
@@ -62,7 +63,7 @@ class BaseDateShiftAttendanceController extends Controller
         }
         if ($response->json()['type'] == 2 || $response->json()['type'] == 3) {
             $multiple_json = $response->json()['results'];
-            dd(      $multiple_json );
+            // dd(      $multiple_json );
             return view('admin.date_shift.report-multiple', [
                'data'=>$multiple_json 
             ]);

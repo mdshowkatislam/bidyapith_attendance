@@ -30,7 +30,7 @@ class EmployeeRepository extends BaseRepository
         }
 
         $url = "{$this->baseUrl}/api/v3/{$endpoint}/{$profileId}";
-        Log::info("Fetching employee details from URL: {$url}");
+        // Log::info("Fetching employee details from URL: {$url}");
 
         try {
             $response = $this->makeApiCall($url);

@@ -175,16 +175,16 @@ Route::prefix('holiday_manage')->group(function () {
 // ✅ Access DB Controll 👈
 Route::post('/accessBdStore', [AccessDBController::class, 'accessDBstore']);
 
-// ✅✅ Index page view -Controller ( Branch,shift,dates ...etc) 🧪🧪
+// ✅✅ Index page View -Controller ( Branch,shift,dates ...etc) 🧪🧪
 
-Route::get('/date-shift-wise-attendance', [DateShiftAttendanceController::class, 'index']);
+Route::get('/attendance/show', [DateShiftAttendanceController::class, 'index']);
 // Route::get('/shifts/by-branch/{branchId}', [DateShiftAttendanceController::class, 'getShiftsByBranch']);
 // Route::get('/districts/by-division/{divisionId}', [DateShiftAttendanceController::class, 'getDistrictsByDivision']);
 // Route::get('/upazilas/by-district/{districtId}', [DateShiftAttendanceController::class, 'getUpazilasByDistrict']);
 
 
 // ✅✅ Employee Attendance Calculation 🔥🔥🔥
-Route::get('/date/shift/attendance', [AttendanceController::class, 'index']);
+Route::post('/branch/shift/date/attendance', [AttendanceController::class, 'index']);
 
 
 

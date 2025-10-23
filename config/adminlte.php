@@ -428,7 +428,7 @@ return [
                 [
                     'text' => 'Attendance',
                     'icon_color' => 'red',
-                    'url' => '/date-shift-wise-attendance',
+                    'url' => '/attendance/show',
                 ]
             ],
         ],

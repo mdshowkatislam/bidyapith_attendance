@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 15, 2025 at 12:43 PM
+-- Generation Time: Oct 23, 2025 at 12:41 PM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -141,12 +141,12 @@ CREATE TABLE IF NOT EXISTS `check_in_outs` (
 --
 
 INSERT INTO `check_in_outs` (`id`, `user_id`, `log_id`, `machine_id`, `date`, `in_time`, `out_time`, `status`, `created_at`, `updated_at`) VALUES
-(1, 58, NULL, NULL, '2025-07-22', '12:50', '18:40', 1, NULL, NULL),
-(2, 55, NULL, NULL, '2025-07-22', '09:16', '17:40', 1, NULL, NULL),
-(3, 57, NULL, NULL, '2025-07-22', '10:05', '18:03', 1, NULL, NULL),
-(4, 62, NULL, NULL, '2025-07-22', '12:45', '19:30', 1, NULL, NULL),
+(1, 58, NULL, NULL, '2025-07-22', '12:50', '16:00', 1, NULL, NULL),
+(2, 55, NULL, NULL, '2025-07-22', '09:16', '16:00', 1, NULL, NULL),
+(3, 57, NULL, NULL, '2025-07-22', '10:05', '16:00', 1, NULL, NULL),
+(4, 62, NULL, NULL, '2025-07-22', '12:45', '16:30', 1, NULL, NULL),
 (5, 64, NULL, NULL, NULL, '', NULL, 1, NULL, NULL),
-(6, 51, NULL, NULL, '2025-07-22', '12:50', '20:30', 1, NULL, NULL),
+(6, 51, NULL, NULL, '2025-07-22', '12:50', '16:30', 1, NULL, NULL),
 (7, 52, NULL, 'mac2023', '0000-00-00', NULL, NULL, 1, NULL, NULL);
 
 -- --------------------------------------------------------
@@ -446,7 +446,7 @@ CREATE TABLE IF NOT EXISTS `groups` (
 --
 
 INSERT INTO `groups` (`id`, `group_name`, `description`, `branch_uid`, `shift_uid`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
-(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 1845401593211652, 1826392052697612, 1, 10, 15, '2025-10-15 00:09:25', '2025-10-15 00:09:25');
+(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 1845401593211652, 1835688947083507, 1, 10, 15, '2025-10-15 00:09:25', '2025-10-15 00:09:25');
 
 -- --------------------------------------------------------
 
@@ -1494,18 +1494,20 @@ CREATE TABLE IF NOT EXISTS `work_days` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `work_days_day_name_unique` (`day_name`)
-) ENGINE=MyISAM AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `work_days`
 --
 
 INSERT INTO `work_days` (`id`, `day_name`, `is_weekend`, `created_at`, `updated_at`) VALUES
-(1, 'Thursday', 0, NULL, '2025-09-24 00:12:38'),
-(2, 'Monday', 0, '2025-07-22 22:34:50', '2025-07-22 22:34:50'),
-(21, 'Saturday', 0, '2025-09-24 00:05:06', '2025-09-24 00:05:06'),
-(24, 'Sunday', 1, '2025-09-24 00:13:44', '2025-09-24 00:13:44'),
-(22, 'Friday', 0, '2025-09-24 00:10:50', '2025-09-24 00:10:50');
+(1, 'Sunday', 0, NULL, NULL),
+(2, 'Monday', 0, NULL, NULL),
+(3, 'Tuesday', 0, NULL, NULL),
+(4, 'Wednesday', 0, NULL, NULL),
+(5, 'Thursday', 0, NULL, NULL),
+(6, 'Friday', 1, NULL, NULL),
+(7, 'Saturday', 1, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -1531,7 +1533,7 @@ CREATE TABLE IF NOT EXISTS `work_day_group` (
 
 INSERT INTO `work_day_group` (`id`, `group_id`, `work_day_id`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, NULL, NULL),
-(2, 1, 2, NULL, NULL);
+(2, 1, 3, NULL, NULL);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

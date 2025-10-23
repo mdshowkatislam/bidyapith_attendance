@@ -17,7 +17,7 @@ class BaseDateShiftAttendanceController extends Controller
             'accept' => 'application/json',
         ])
             ->withOptions(['verify' => false])
-            ->get('http://attendance2.localhost.com/api/date-shift-wise-attendance');
+            ->get('http://attendance2.localhost.com/api/attendance/show');
         $json = $response->json();
    
         // dd($json);
@@ -36,16 +36,16 @@ class BaseDateShiftAttendanceController extends Controller
     {
         $queryParams = $request->all();
 
-        // dd( $queryParams);
+    //   dd($queryParams );
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'accept' => 'application/json',
         ])
             ->withOptions(['verify' => false])
-            ->get('http://attendance2.localhost.com/api/date/shift/attendance', $queryParams);
+            ->post('http://attendance2.localhost.com/api/branch/shift/date/attendance', $queryParams);
 
-        //   dd( $response->json()['branch'] );
+          dd( $response->json());
 
         if ($response->json()['type'] == 1) {
             $single_json = $response->json()['results'][0];

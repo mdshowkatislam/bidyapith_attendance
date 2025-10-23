@@ -23,6 +23,7 @@ class AttendanceController extends Controller
 
     public function index(Request $request)
     {
+        // Log::info('fff');
         try {
             // Validate only local fields
             $validated = $request->validate([
@@ -45,18 +46,16 @@ class AttendanceController extends Controller
             if (!$shift) {
                 return response()->json(['error' => 'Shift not found'], 404);
             }
-
             // Get branch details from external service
             $branch = $this->externalDataService->fetchBranchDetails($validated['branch_uid']);
+
             if (!$branch) {
                 return response()->json(['error' => 'Branch not found'], 404);
             }
 
             // Get employees filtered by branch, shift and other criteria
-            $employees = $this->getFilteredEmployees($validated, $branch, $shift);
+            $employees = $this->getFilteredEmployees($validated); 
 
-             Log::info($employees); // this is populated , so why the $attendanceData is empty?
-             Log::info('zzz');
             // Get attendance records for date range from external service
             $attendanceData = $this->externalDataService->fetchAttendanceData(
                 $employees->pluck('profile_id')->toArray(),
@@ -123,7 +122,7 @@ class AttendanceController extends Controller
     /**
      * Get employees filtered by branch, shift and other criteria
      */
-    private function getFilteredEmployees(array $validated, array $branch, array $shift)
+    private function getFilteredEmployees(array $validated)
     {
         // 1️⃣ Fetch groups for this branch + shift
         $query = Group::where('branch_uid', $validated['branch_uid'])
@@ -135,6 +134,8 @@ class AttendanceController extends Controller
 
         $groups = $query->get();
         $groupIds = $groups->pluck('id')->toArray();
+      
+
 
         if (empty($groupIds)) {
             // Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
@@ -149,7 +150,9 @@ class AttendanceController extends Controller
             ->unique()
             ->values()
             ->toArray();
-
+         Log::warning("vvv1");
+        Log::info( $employeeProfileIds);
+        
         if (empty($employeeProfileIds)) {
             Log::warning('No employees found in pivot table for groups', ['group_ids' => $groupIds]);
             return collect();

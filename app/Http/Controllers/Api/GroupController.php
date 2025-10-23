@@ -13,55 +13,49 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\PDF;
 use Illuminate\Support\Facades\Http;
-
-
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Http\Response;
 
 class GroupController extends Controller
 {
-    // public function index(Request $request)
-    // {
-    //     $groups = Group::with([
-    //         'shift:id,shift_name_en,branch_code',
-    //         'shift.branch:id,branch_code,branch_name_en',  // Add branch relationship
-    //         'workDays:id,day_name',
-    //         'employees:id,name'
-    //     ])
-    //         ->get();
+    use \App\Traits\ApiResponse; // Use your existing trait
 
-    //     if ($groups->isEmpty()) {
-    //         return response()->json([
-    //             'message' => 'No groups found.',
-    //         ], 404);
-    //     }
-
-    //     return response()->json([
-    //         'message' => 'Groups fetched successfully.',
-    //         'groups' => $groups,
-    //     ], 200);
-    // }
     public function index(Request $request)
     {
-        // $groups = Group::with([
-        //     'shift.branch',  // Eager load branch through shift
-        //     'workDays',
-        //     'employees',
-        // ])->get();
-
-
-
-        $groups = Group::all();
+        // Eager load relationships to avoid N+1 queries
+        $groups = Group::with(['employees', 'workDays'])->get();
+        
+        Log::info('Groups fetched count: ' . $groups->count());
 
         if ($groups->isEmpty()) {
-            return $this->apisuccessResponse('No groups found.', 404);
+            return $this->errorResponse('No groups found.', Response::HTTP_NOT_FOUND);
         }
-        return $this->apisuccessResponse('Groups fetched successfully.', GroupResource::collection($groups), 200);
+
+        return $this->successResponseWithData(
+            GroupResource::collection($groups),
+            'Groups fetched successfully.',
+            Response::HTTP_OK
+        );
+    }
+
+    public function show($id)
+    {
+        $group = Group::with(['employees', 'workDays'])->find($id);
+
+        if (!$group) {
+            return $this->errorResponse('Group not found.', Response::HTTP_NOT_FOUND);
+        }
+
+        return $this->successResponseWithData(
+            new GroupResource($group),
+            'Group fetched successfully.',
+            Response::HTTP_OK
+        );
     }
 
     public function add()
     {
-
         $branches = Branch::where('rec_status', 1)
             ->select('branch_code', 'branch_name_en')
             ->get();
@@ -72,51 +66,50 @@ class GroupController extends Controller
         $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id')->get();
 
         if ($employees->isEmpty()) {
-            return $this->apisuccessResponse('No employees available to assign.', 404);
+            return $this->errorResponse('No employees available to assign.', Response::HTTP_NOT_FOUND);
         }
 
         if ($workDays->isEmpty()) {
-            return $this->apisuccessResponse('No work days available to assign.', 404);
+            return $this->errorResponse('No work days available to assign.', Response::HTTP_NOT_FOUND);
         }
 
-        return $this->apisuccessResponse('Data fetched successfully.', [
+        return $this->successResponseWithData([
             'workDays' => $workDays,
             'employees' => $employees,
             'shifts' => $shifts,
             'branches' => $branches,
-        ]);
+        ], 'Data fetched successfully.', Response::HTTP_OK);
     }
 
     public function details($id)
     {
-        // exit();
-
         $group = Group::where('status', 1)->find($id);
-        $result = new GroupResource($group);
-
 
         if (!$group) {
-            return $this->apisuccessResponse('Group not found.', 404);
+            return $this->errorResponse('Group not found.', Response::HTTP_NOT_FOUND);
         }
 
-        return $this->apisuccessResponse('Group found.', new GroupResource($group), 200);
+        return $this->successResponseWithData(
+            new GroupResource($group),
+            'Group found.',
+            Response::HTTP_OK
+        );
     }
 
     public function store(Request $request)
     {
-
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name',
             'description' => 'nullable|string',
             'branch_uid' => 'required|integer',
-            'shift_uid' => 'required|integer', // from external API
+            'shift_uid' => 'required|integer',
             'status' => 'nullable|in:0,1',
             'flexible_in_time' => 'nullable|integer|between:1,59',
             'flexible_out_time' => 'nullable|integer|between:1,59',
             'work_day_ids' => 'nullable|array',
             'work_day_ids.*' => 'integer|exists:work_days,id',
             'employee_emp_ids' => 'nullable|array',
-            'employee_emp_ids.*' => 'integer', // from external API
+            'employee_emp_ids.*' => 'integer',
         ], [
             'group_name.required' => 'Group name is required',
             'group_name.unique' => 'This group name is already taken.',
@@ -125,15 +118,13 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
+            return $this->errorResponse($validator->errors()->first(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
-            // convert to int if provided
             $flexInTime = $request->filled('flexible_in_time') ? (int) $request->flexible_in_time : null;
             $flexOutTime = $request->filled('flexible_out_time') ? (int) $request->flexible_out_time : null;
 
-            // Create the group
             $group = Group::create([
                 'group_name' => $request->group_name,
                 'description' => $request->description,
@@ -144,33 +135,24 @@ class GroupController extends Controller
                 'flexible_out_time' => $flexOutTime,
             ]);
 
-            // Pivot relationships
             if (!empty($request->work_day_ids)) {
                 $group->workDays()->sync($request->work_day_ids);
             }
-            // Employees come from external API — store just IDs in pivot
+
             if (!empty($request->employee_emp_ids)) {
                 $group->employees()->sync($request->employee_emp_ids);
             }
 
-            return $this->apisuccessResponse('Group created successfully.', $group, 201);
+            return $this->successResponseWithData($group, 'Group created successfully.', Response::HTTP_CREATED);
         } catch (\Exception $e) {
-            return $this->apierrorResponse(
-                new \Exception('Error creating group: ' . $e->getMessage()),
-                'Error creating group',
-                500
-            );
+            return $this->errorResponse('Error creating group: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
-
-
     public function edit($id)
     {
-        // ✅ Base API URL (same as in GroupResource)
         $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
 
-        // ✅ Fetch the group with relationships
         $group = Group::select([
             'id',
             'group_name',
@@ -187,7 +169,6 @@ class GroupController extends Controller
             ])
             ->findOrFail($id);
 
-        // Remove pivot for cleaner JSON
         foreach ($group->employees as $item) {
             $item->setRelation('pivot', false);
         }
@@ -195,13 +176,9 @@ class GroupController extends Controller
             $item->setRelation('pivot', false);
         }
 
-        // ✅ Fetch external Branches list
         $branches = $this->fetchBranchesList($baseUrl);
-
-        // ✅ Fetch external Shifts list
         $shifts = $this->fetchShiftsList($baseUrl);
 
-        // ✅ Fetch employees data (using local relation + external details)
         $employees = $group->employees->map(function ($employee) use ($baseUrl) {
             $personType = $employee->person_type;
             $profileId = $employee->profile_id;
@@ -223,21 +200,16 @@ class GroupController extends Controller
             ];
         });
 
-        // ✅ Local workdays for dropdown
         $workDays = WorkDay::select(['id', 'day_name'])->get();
 
-        return $this->apisuccessResponse('Data fetched successfully.', [
+        return $this->successResponseWithData([
             'group' => $group,
             'workDays' => $workDays,
             'branches' => $branches,
             'shifts' => $shifts,
             'employees' => $employees,
-        ]);
+        ], 'Data fetched successfully.', Response::HTTP_OK);
     }
-
-    ////////////////////////////////////////////////////
-    // 🔹 Helper Methods — same logic as GroupResource
-    ////////////////////////////////////////////////////
 
     private function fetchEmployeeDetails($baseUrl, $personType, $profileId)
     {
@@ -272,7 +244,7 @@ class GroupController extends Controller
 
     private function fetchBranchesList($baseUrl)
     {
-        $eiin = 134172; // ✅ static for testing
+        $eiin = 134172;
         $url = "{$baseUrl}/api/v3/branch-list?eiin={$eiin}";
         Log::info("Fetching branches list from URL: {$url}");
 
@@ -293,7 +265,7 @@ class GroupController extends Controller
 
     private function fetchShiftsList($baseUrl)
     {
-        $eiin = 134172; // ✅ static for testing
+        $eiin = 134172;
         $url = "{$baseUrl}/api/v3/test/shift-list?eiin={$eiin}";
         Log::info("zzz: {$url}");
 
@@ -312,8 +284,6 @@ class GroupController extends Controller
         return [];
     }
 
-
-
     public function update($id, Request $request)
     {
         $group = Group::findOrFail($id);
@@ -321,14 +291,14 @@ class GroupController extends Controller
             'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
             'description' => 'nullable|string',
             'branch_uid' => 'required|integer',
-            'shift_uid' => 'required|integer', // external API
+            'shift_uid' => 'required|integer',
             'status' => 'nullable|in:0,1',
             'flexible_in_time' => 'nullable|integer|between:1,59',
             'flexible_out_time' => 'nullable|integer|between:1,59',
             'work_day_ids' => 'nullable|array',
             'work_day_ids.*' => 'exists:work_days,id',
             'employee_emp_ids' => 'nullable|array',
-            'employee_emp_ids.*' => 'integer', // external API
+            'employee_emp_ids.*' => 'integer',
         ], [
             'group_name.required' => 'Group name is required',
             'group_name.unique' => 'This group name is already taken.',
@@ -337,7 +307,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return $this->apierrorResponse(new \Exception($validator->errors()->first()), 'Validation error', 422);
+            return $this->errorResponse($validator->errors()->first(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
         try {
@@ -354,12 +324,11 @@ class GroupController extends Controller
             $group->workDays()->sync($request->work_day_ids ?? []);
             $group->employees()->sync($request->employee_emp_ids ?? []);
 
-            return $this->apisuccessResponse('Group updated successfully.', $group, 200);
+            return $this->successResponseWithData($group, 'Group updated successfully.', Response::HTTP_OK);
         } catch (\Exception $e) {
-            return $this->apierrorResponse(new \Exception('Error updating group: ' . $e->getMessage()), 'Error updating group', 500);
+            return $this->errorResponse('Error updating group: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public function destroy(Group $group)
     {
@@ -368,15 +337,14 @@ class GroupController extends Controller
             $group->workDays()->detach();
 
             if (!$group->delete()) {
-                return $this->apierrorResponse(new \Exception('Group could not be deleted.'), 'Group deletion error', 500);
+                return $this->errorResponse('Group could not be deleted.', Response::HTTP_INTERNAL_SERVER_ERROR);
             }
 
-            return $this->apisuccessResponse('Group deleted successfully.', null, 200);
+            return $this->successMessage('Group deleted successfully.', Response::HTTP_OK);
         } catch (\Exception $e) {
-            return $this->apierrorResponse(new \Exception('Error deleting group: ' . $e->getMessage()), 'Group deletion error', 500);
+            return $this->errorResponse('Error deleting group: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
 
     public function toggleStatus($id)
     {
@@ -390,125 +358,80 @@ class GroupController extends Controller
             'badge_class' => $group->status === 1 ? 'bg-success' : 'bg-secondary'
         ]);
     }
-    // ✅  For defalt Paper Size view ✅ 
-    // public function downloadPdf($id)
-    // {
-    //     try {
-    //         $data = Group::where('status', 1)->find($id);
-
-    //         if (!$data) {
-    //             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-    //         }
-
-    //         $group = new GroupResource($data);
-
-    //         // Configure PDF settings
-    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
-    //                   ->setPaper('a4', 'landscape') // or 'portrait' depending on your content
-    //                   ->setOption('dpi', 150)
-    //                   ->setOption('margin-top', 10)
-    //                   ->setOption('margin-right', 10)
-    //                   ->setOption('margin-bottom', 10)
-    //                   ->setOption('margin-left', 10);
-
-    //         // Return the PDF as a download response
-    //         return $pdf->download('group-details-' . $id . '.pdf');
-    //     } catch (\Exception $e) {
-    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
-    //     }
-    // }
 
 
-    // 🧩 For Custom Paper Size with Specific Dimensions 🧩
-    // public function downloadPdf($id)
-    // {
-    //     Log::info('pp');
-    //     try {
-    //         $data = Group::where('status', 1)->find($id);
+    public function downloadPdf($id)
+    {
+        Log::info('pp');
+        try {
+            $data = Group::where('status', 1)->find($id);
 
-    //         if (!$data) {
-    //             return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-    //         }
+            if (!$data) {
+                return $this->errorResponse('Group not found', Response::HTTP_NOT_FOUND);
+            }
 
-    //         $group = new GroupResource($data);
-    //           Log::info('grouResouce data=');
-    //         Log::info(json_encode($group->toArray(request()), JSON_PRETTY_PRINT));
-    //          Log::info('data showing ended');
-    //         // Custom paper size (width, height) in millimeters
-    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
-    //             ->setPaper([0, 0, 1200, 1440], 'portrait') // Custom size
-    //             ->setOption('dpi', 96)
-    //             ->setOption('defaultFont', 'Arial')
-    //             ->setOption('isHtml5ParserEnabled', true);
-    //         //   return $pdf->stream('group-details.pdf');
-    //        Log::info('rr');
-    //         return $pdf->download('group-details-' . $id . '.pdf');
-    //     } catch (\Exception $e) {
-    //                    Log::info('cc');
-    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
-    //     }
-    // }
-
-   public function downloadPdf($id)
-{
-    Log::info('pp');
-    try {
-        $data = Group::where('status', 1)->find($id);
-
-        if (!$data) {
-            return $this->apierrorResponse(new \Exception('Group not found'), 'Group not found', 404);
-        }
-
-        $groupResource = new GroupResource($data);
-        $groupArray = $groupResource->toArray(request());
-        
-        Log::info('Final data being passed to PDF:');
-        Log::info(json_encode($groupArray, JSON_PRETTY_PRINT));
-
-        // Pass as array instead of resource object
-        $pdf = PDF::loadView('admin.frontend.group.pdf', ['group' => $groupArray])
-            ->setPaper([0, 0, 1200, 1440], 'portrait')
-            ->setOption('dpi', 96)
-            ->setOption('defaultFont', 'Arial')
-            ->setOption('isHtml5ParserEnabled', true);
+            $groupResource = new GroupResource($data);
+            $groupArray = $groupResource->toArray(request());
             
-        Log::info('PDF generated successfully');
-        return $pdf->download('group-details-' . $id . '.pdf');
-    } catch (\Exception $e) {
-        Log::error('PDF Generation Error: ' . $e->getMessage());
-        Log::error('Trace: ' . $e->getTraceAsString());
-        return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
+            Log::info('Final data being passed to PDF:');
+            Log::info(json_encode($groupArray, JSON_PRETTY_PRINT));
+
+            $pdf = PDF::loadView('admin.frontend.group.pdf', ['group' => $groupArray])
+                ->setPaper([0, 0, 1200, 1440], 'portrait')
+                ->setOption('dpi', 96)
+                ->setOption('defaultFont', 'Arial')
+                ->setOption('isHtml5ParserEnabled', true);
+            
+            Log::info('PDF generated successfully');
+            return $pdf->download('group-details-' . $id . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('PDF Generation Error: ' . $e->getMessage());
+            Log::error('Trace: ' . $e->getTraceAsString());
+            return $this->errorResponse('Failed to generate PDF: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
-}
 
+    public function downloadPdf2($id)
+    {
+        try {
+            $data = Group::where('status', 1)->find($id);
 
+            $group = new GroupResource($data);
+            
+            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
 
-    // public function downloadPdf($id)
-    // {
-    //     try {
-    //         $data = Group::where('status', 1)->find($id);
+            return response()->json([
+                'group' => base64_encode($pdf->output()),
+                'file_name' => 'group-details-' . $id . '.pdf'
+            ]);
 
-    //       $group = new GroupResource($data);
-    //             //   \Log::info('Group data for PDF:', $group->toArray(request()));
-    //         $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'));
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to generate PDF: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+    
+    public function downloadPdf3($id)
+    {
+        try {
+            $data = Group::where('status', 1)->find($id);
 
-    //         // return $pdf->download('group-details-' . $id . '.pdf');
-    //         // return $pdf->stream('group-details-' . $id . '.pdf');
-    //         // return response()->streamDownload(function() use ($pdf) {
-    //         //     echo $pdf->output();
-    //         // }, 'group-details-' . $id . '.pdf');
-    //         // return response()->json([
-    //         //     'message' => 'PDF generated successfully.',
-    //         //     'pdf_content' => base64_encode($pdf->output()),
-    //         //     'file_name' => 'group-details-' . $id . '.pdf'
-    //         // ]);
-    //         return response()->json([
-    //             'group' => $pdf->output(),
-    //             'file_name' => 'group-details-' . $id . '.pdf'
-    //             ]);
+            if (!$data) {
+                return $this->errorResponse('Group not found', Response::HTTP_NOT_FOUND);
+            }
 
-    //     } catch (\Exception $e) {
-    //         return $this->apierrorResponse($e, 'Failed to generate PDF', 500);
-    //     }
-    // }
+            $group = new GroupResource($data);
+
+            $pdf = PDF::loadView('admin.frontend.group.pdf', compact('group'))
+                      ->setPaper('a4', 'landscape')
+                      ->setOption('dpi', 150)
+                      ->setOption('margin-top', 10)
+                      ->setOption('margin-right', 10)
+                      ->setOption('margin-bottom', 10)
+                      ->setOption('margin-left', 10);
+
+            return $pdf->download('group-details-' . $id . '.pdf');
+        } catch (\Exception $e) {
+            return $this->errorResponse('Failed to generate PDF: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
 }

@@ -8,24 +8,19 @@ use Illuminate\Support\Facades\Log;
 
 class GroupResource extends JsonResource
 {
-    private $externalDataService;
-
-    public function __construct($resource, ExternalDataService $externalDataService = null)
-    {
-        parent::__construct($resource);
-        $this->externalDataService = $externalDataService ?? app(ExternalDataService::class);
-    }
-
     public function toArray($request)
     {
+        // Resolve the service inside the method
+        $externalDataService = app(ExternalDataService::class);
+        
         Log::info('Fetching data for Group ID: ' . $this->id);
 
         // Use service to fetch external data
-        $branchData = $this->branch_uid ? $this->externalDataService->fetchBranchDetails($this->branch_uid) : null;
-        $shiftData  = $this->shift_uid ? $this->externalDataService->fetchShiftDetails($this->shift_uid) : null;
+        $branchData = $this->branch_uid ? $externalDataService->fetchBranchDetails($this->branch_uid) : null;
+        $shiftData  = $this->shift_uid ? $externalDataService->fetchShiftDetails($this->shift_uid) : null;
 
-        $employees = $this->employees->map(function ($employee) {
-            $employeeData = $this->externalDataService->fetchEmployeeDetails(
+        $employees = $this->employees->map(function ($employee) use ($externalDataService) {
+            $employeeData = $externalDataService->fetchEmployeeDetails(
                 $employee->person_type, 
                 $employee->profile_id
             );
@@ -40,11 +35,11 @@ class GroupResource extends JsonResource
                 'present_address' => $employeeData['address'] ?? null,
                 'picture' => $employeeData['image'] ?? null,
                 'division' => isset($employeeData['division_id']) ? 
-                    $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
+                    $externalDataService->fetchDivisionName($employeeData['division_id']) : null,
                 'district' => isset($employeeData['district_id']) ? 
-                    $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
+                    $externalDataService->fetchDistrictName($employeeData['district_id']) : null,
                 'upazila' => isset($employeeData['upazilla_id']) ? 
-                    $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
+                    $externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
             ];
         });
 

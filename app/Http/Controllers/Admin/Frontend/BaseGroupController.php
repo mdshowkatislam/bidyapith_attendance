@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\Log;
 class BaseGroupController extends Controller
 {
     public function index()
-    {;
+    {
+        dd("jj");
         try {
          
             $response = Http::withHeaders([
@@ -106,9 +107,13 @@ class BaseGroupController extends Controller
 
             return null;
         } catch (\Exception $e) {
-            return $this->errorResponse($e, 'Error fetching group data');
+            Log::error('API call failed: ' . $e->getMessage());
+            return $e->getMessage();
         }
     }
+    //  return redirect()
+    //             ->route('group_manage.index')
+    //             ->with('error', 'Something went wrong while deleting: ' . $e->getMessage());
 
     public function previewPdfView($id)
     {

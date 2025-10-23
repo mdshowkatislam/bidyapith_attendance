@@ -96,9 +96,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
 // ✅ =========== Attendance Calculation ========== 
 
-    Route::get('/date-shift-wise-attendance', [BaseDateShiftAttendanceController::class, 'index'])->name('date_shift_wise_attendance');
+    Route::get('/attendance/show', [BaseDateShiftAttendanceController::class, 'index'])->name('date_shift_wise_attendance');
 
     Route::get('attendance-report', [BaseDateShiftAttendanceController::class, 'reportGenarate'])->name('attendance.report');
 
-    Route::get('/date/{date}/shift/{shiftId}/attendance-report', [BaseDateShiftAttendanceController::class, 'attendancePdf'])->name('attendance-report.pdf');
+    Route::get('branch/{branchUid}/shift/{shiftUid}/date/{date}/attendance-report', [BaseDateShiftAttendanceController::class, 'attendancePdf'])->name('attendance-report.pdf');
 });

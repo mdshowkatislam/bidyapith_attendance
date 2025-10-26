@@ -53,9 +53,9 @@
                             style="width: 100%;">
                         <option value="">-- Choose Branch --</option>
                         @foreach ($branches as $branch)
-                            <option value="{{ $branch['branch_code'] }}"
-                                    {{ $group['shift']['branch_code'] == $branch['branch_code'] ? 'selected' : '' }}>
-                                {{ $branch['branch_code'] }} - {{ $branch['branch_name_en'] }}
+                            <option value="{{ $branch['branch_id'] }}"
+                                    {{ $group['shift']['branch_id'] == $branch['branch_id'] ? 'selected' : '' }}>
+                                {{ $branch['branch_id'] }} - {{ $branch['branch_name_en'] }}
                             </option>
                         @endforeach
                     </select>

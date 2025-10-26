@@ -53,8 +53,8 @@
                             style="width: 100%;">
                         <option value="">-- Choose Branch --</option>
                         @foreach ($branches as $branch)
-                            <option value="{{ $branch['branch_code'] }}">
-                                {{ $branch['branch_code'] }} - {{ $branch['branch_name_en'] }}
+                            <option value="{{ $branch['branch_uid'] }}">
+                              {{ $branch['branch_name_en'] }}
                             </option>
                         @endforeach
                     </select>

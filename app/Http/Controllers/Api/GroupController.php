@@ -16,17 +16,29 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Response;
+use App\Services\ExternalDataService;
+use App\Services\DropdownService;
 
 class GroupController extends Controller
 {
-    use \App\Traits\ApiResponse; // Use your existing trait
+    use \App\Traits\ApiResponse;
+
+    protected $externalDataService;
+    protected $dropdownService;
+
+    public function __construct(
+        ExternalDataService $externalDataService,
+        DropdownService $dropdownService
+    ) {
+        $this->externalDataService = $externalDataService;
+        $this->dropdownService = $dropdownService;
+    }
 
     public function index(Request $request)
     {
         // Eager load relationships to avoid N+1 queries
         $groups = Group::with(['employees', 'workDays'])->get();
-        
-        Log::info('Groups fetched count: ' . $groups->count());
+        // Log::info('Groups fetched count: ' . $groups->count());
 
         if ($groups->isEmpty()) {
             return $this->errorResponse('No groups found.', Response::HTTP_NOT_FOUND);
@@ -56,14 +68,11 @@ class GroupController extends Controller
 
     public function add()
     {
-        $branches = Branch::where('rec_status', 1)
-            ->select('branch_code', 'branch_name_en')
-            ->get();
-
-        $shifts = collect();
-
+        // Use DropdownService for consistent data fetching
+        $dropdownData = $this->dropdownService->getAllDropdownData();
+        
         $workDays = WorkDay::select('id', 'day_name')->get();
-        $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id')->get();
+        $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id', 'person_type')->get();
 
         if ($employees->isEmpty()) {
             return $this->errorResponse('No employees available to assign.', Response::HTTP_NOT_FOUND);
@@ -73,11 +82,42 @@ class GroupController extends Controller
             return $this->errorResponse('No work days available to assign.', Response::HTTP_NOT_FOUND);
         }
 
+        // Enhance employees with external data
+        $enhancedEmployees = $employees->map(function ($employee) {
+            $employeeDetails = $this->externalDataService->fetchEmployeeDetails(
+                $employee->person_type, 
+                $employee->profile_id
+            );
+               
+
+                 $employeeData = $employeeDetails['data'] ?? [];
+
+            return [
+                'id' => $employee->id,
+                'profile_id' => $employee->profile_id,
+                'person_type' => $employee->person_type,
+                'name' => $employeeData['name_en'] ?? null,
+                'designation' => $employeeData['designation'] ?? null,
+                'mobile_number' => $employeeData['mobile_no'] ?? null,
+                'present_address' => $employeeData['address'] ?? null,
+                'picture' => $employeeData['image'] ?? null,
+                'division' => isset($employeeData['division_id']) ? 
+                    $this->externalDataService->fetchDivisionName($employeeData['division_id']) : null,
+                'district' => isset($employeeData['district_id']) ? 
+                    $this->externalDataService->fetchDistrictName($employeeData['district_id']) : null,
+                'upazila' => isset($employeeData['upazilla_id']) ? 
+                    $this->externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
+            ];
+        });
+
+        \Log::info(    $enhancedEmployees ); // why some values are missing? check logs 
+        \Log::info(    "kkk" );
+
         return $this->successResponseWithData([
             'workDays' => $workDays,
-            'employees' => $employees,
-            'shifts' => $shifts,
-            'branches' => $branches,
+            'employees' => $enhancedEmployees,
+            'shifts' => $dropdownData['shifts'] ?? [],
+            'branches' => $dropdownData['branches'] ?? [],
         ], 'Data fetched successfully.', Response::HTTP_OK);
     }
 
@@ -148,141 +188,71 @@ class GroupController extends Controller
             return $this->errorResponse('Error creating group: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
-
-    public function edit($id)
-    {
-        $baseUrl = rtrim(config('api_url.baseUrl_1'), '/');
-
-        $group = Group::select([
-            'id',
-            'group_name',
-            'description',
-            'branch_uid',
-            'shift_uid',
-            'status',
-            'flexible_in_time',
-            'flexible_out_time'
-        ])
-            ->with([
-                'employees:id,caid,profile_id,person_type',
-                'workDays:id,day_name'
-            ])
-            ->findOrFail($id);
-
-        foreach ($group->employees as $item) {
-            $item->setRelation('pivot', false);
-        }
-        foreach ($group->workDays as $item) {
-            $item->setRelation('pivot', false);
+public function edit($id) 
+{
+    try {
+        // Fetch group using GroupResource for consistent data structure
+        $group = Group::with(['employees', 'workDays'])->find($id);
+        
+        if (!$group) {
+            return $this->errorResponse('Group not found.', Response::HTTP_NOT_FOUND);
         }
 
-        $branches = $this->fetchBranchesList($baseUrl);
-        $shifts = $this->fetchShiftsList($baseUrl);
+        $groupResource = new GroupResource($group);
+        $groupData = $groupResource->toArray(request());
 
-        $employees = $group->employees->map(function ($employee) use ($baseUrl) {
-            $personType = $employee->person_type;
-            $profileId = $employee->profile_id;
+        // Use DropdownService for consistent dropdown data
+        $dropdownData = $this->dropdownService->getAllDropdownData();
 
-            $employeeData = $this->fetchEmployeeDetails($baseUrl, $personType, $profileId);
+        // Get available employees (not assigned to any group)
+        $availableEmployees = Employee::whereDoesntHave('groups')
+            ->orWhereHas('groups', function($query) use ($id) {
+                $query->where('groups.id', $id); // Include current group's employees
+            })
+            ->select('id', 'profile_id', 'person_type')
+            ->get()
+            ->map(function ($employee) {
+                $employeeData = $this->externalDataService->fetchEmployeeDetails(
+                    $employee->person_type, 
+                    $employee->profile_id
+                );
 
-            return [
-                'id' => $employee->id,
-                'profile_id' => $profileId,
-                'person_type' => $personType,
-                'name' => $employeeData['name_en'] ?? null,
-                'designation' => $employeeData['designation'] ?? null,
-                'mobile_number' => $employeeData['mobile_no'] ?? null,
-                'present_address' => $employeeData['address'] ?? null,
-                'picture' => $employeeData['image'] ?? null,
-                'division' => $employeeData['division_id'] ?? null,
-                'district' => $employeeData['district_id'] ?? null,
-                'upazila' => $employeeData['upazilla_id'] ?? null,
-            ];
-        });
+                // Extract the actual employee data from the nested structure
+                $employeeDetails = $employeeData['data'] ?? [];
+
+                return [
+                    'id' => $employee->id,
+                    'profile_id' => $employee->profile_id,
+                    'person_type' => $employee->person_type,
+                    'name' => $employeeDetails['name_en'] ?? null,
+                    'designation' => $employeeDetails['designation'] ?? null,
+                    'mobile_number' => $employeeDetails['mobile_no'] ?? null,
+                    'present_address' => $employeeDetails['address'] ?? null,
+                    'picture' => $employeeDetails['image'] ?? null,
+                    'division' => isset($employeeDetails['division_id']) ? 
+                        $this->externalDataService->fetchDivisionName($employeeDetails['division_id']) : null,
+                    'district' => isset($employeeDetails['district_id']) ? 
+                        $this->externalDataService->fetchDistrictName($employeeDetails['district_id']) : null,
+                    'upazila' => isset($employeeDetails['upazilla_id']) ? 
+                        $this->externalDataService->fetchUpazilaName($employeeDetails['upazilla_id']) : null,
+                ];
+            });
 
         $workDays = WorkDay::select(['id', 'day_name'])->get();
 
         return $this->successResponseWithData([
-            'group' => $group,
+            'group' => $groupData,
             'workDays' => $workDays,
-            'branches' => $branches,
-            'shifts' => $shifts,
-            'employees' => $employees,
+            'branches' => $dropdownData['branches'] ?? [],
+            'shifts' => $dropdownData['shifts'] ?? [],
+            'employees' => $availableEmployees,
         ], 'Data fetched successfully.', Response::HTTP_OK);
+
+    } catch (\Exception $e) {
+        Log::error('Error in GroupController edit method: ' . $e->getMessage());
+        return $this->errorResponse('Error fetching group data: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
     }
-
-    private function fetchEmployeeDetails($baseUrl, $personType, $profileId)
-    {
-        $endpoint = match ($personType) {
-            1 => 'teacherAsEmp',
-            2 => 'staffAsEmp',
-            3 => 'studentAsEmp',
-            default => null,
-        };
-
-        if (!$endpoint) return [];
-
-        $url = "{$baseUrl}/api/v3/{$endpoint}/{$profileId}";
-        Log::info("Fetching employee from URL: {$url}");
-
-        try {
-            $response = Http::timeout(6)->get($url);
-            if ($response->successful()) {
-                return $response->json('data') ?? [];
-            }
-            Log::warning('Employee API failed', [
-                'url' => $url,
-                'status' => $response->status(),
-                'body' => $response->body(),
-            ]);
-        } catch (\Throwable $e) {
-            Log::error('Employee API exception', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-
-        return [];
-    }
-
-    private function fetchBranchesList($baseUrl)
-    {
-        $eiin = 134172;
-        $url = "{$baseUrl}/api/v3/branch-list?eiin={$eiin}";
-        Log::info("Fetching branches list from URL: {$url}");
-
-        try {
-            $response = Http::timeout(6)->get($url);
-            Log::info('Branches API Raw', ['body' => $response->json()]);
-            if ($response->successful()) {
-                $data = $response->json('data') ?? [];
-                Log::info('Branch API Response Count: ' . count($data));
-                return is_array($data) ? $data : [];
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching branches list', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-
-        return [];
-    }
-
-    private function fetchShiftsList($baseUrl)
-    {
-        $eiin = 134172;
-        $url = "{$baseUrl}/api/v3/test/shift-list?eiin={$eiin}";
-        Log::info("zzz: {$url}");
-
-        try {
-            $response = Http::timeout(6)->get($url);
-            Log::info('Shift API Raw', ['body' => $response->json()]);
-            if ($response->successful()) {
-                $data = $response->json('data') ?? [];
-                Log::info('Shifts API Response Count: ' . count($data));
-                return is_array($data) ? $data : [];
-            }
-        } catch (\Throwable $e) {
-            Log::error('Error fetching shifts list', ['url' => $url, 'error' => $e->getMessage()]);
-        }
-
-        return [];
-    }
+}
 
     public function update($id, Request $request)
     {
@@ -359,7 +329,6 @@ class GroupController extends Controller
         ]);
     }
 
-
     public function downloadPdf($id)
     {
         Log::info('pp');
@@ -390,6 +359,7 @@ class GroupController extends Controller
             return $this->errorResponse('Failed to generate PDF: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
+
 
     public function downloadPdf2($id)
     {

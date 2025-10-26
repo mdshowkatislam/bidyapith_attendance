@@ -13,9 +13,7 @@
         <!-- Header -->
         <div class="d-flex justify-content-between align-items-center mb-3 pt-4">
             <h4>Employee List</h4>
-            <a href="{{ route('employee_profile.add') }}" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Add Employee
-            </a>
+            <!-- Removed Add Employee button since data comes from external API -->
         </div>
 
         <!-- Search & Filter Form -->
@@ -30,7 +28,18 @@
                                    name="search"
                                    value="{{ request('search') }}"
                                    class="form-control"
-                                   placeholder="Name, badge, NID or phone">
+                                   placeholder="Profile ID, CAID or EIIN">
+                        </div>
+
+                        <!-- Person Type Filter -->
+                        <div class="col-md-2">
+                            <label class="form-label">Person Type</label>
+                            <select name="person_type" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="1" {{ request('person_type') == '1' ? 'selected' : '' }}>Teacher</option>
+                                <option value="2" {{ request('person_type') == '2' ? 'selected' : '' }}>Staff</option>
+                                <option value="3" {{ request('person_type') == '3' ? 'selected' : '' }}>Student</option>
+                            </select>
                         </div>
 
                         <!-- Division Dropdown -->
@@ -77,26 +86,16 @@
                             </select>
                         </div>
 
-                        <!-- Status Filter -->
-                        <div class="col-md-2">
-                            <label class="form-label">Status</label>
-                            <select name="status" class="form-control">
-                                <option value="">All Status</option>
-                                <option value="1" {{ request('status') == '1' ? 'selected' : '' }}>Active</option>
-                                <option value="0" {{ request('status') == '0' ? 'selected' : '' }}>Inactive</option>
-                            </select>
-                        </div>
-
-                        <!-- Action Buttons -->
-                        <div class="col-md-3">
-                            <button type="submit" class="btn btn-secondary w-100">
-                                <i class="fas fa-filter"></i> Filter
-                            </button>
-                        </div>
-                        <div class="col-md-2">
-                            <a href="{{ route('employee_profile.index') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-refresh"></i> Reset
-                            </a>
+                        <!-- Action Buttons - Centered -->
+                        <div class="col-12 mt-4">
+                            <div class="d-flex justify-content-center gap-3">
+                                <button type="submit" class="btn btn-secondary" style="min-width: 120px;margin-right: 3px;">
+                                    <i class="fas fa-filter"></i> Filter
+                                </button>
+                                <a href="{{ route('employee_profile.index') }}" class="btn btn-outline-secondary" style="min-width: 120px;margin-left: 3px;">
+                                    <i class="fas fa-refresh"></i> Reset
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -111,72 +110,51 @@
                         <thead class="table-dark">
                             <tr>
                                 <th>#</th>
+                                <th>Profile ID</th>
                                 <th>Name</th>
                                 <th>Photo</th>
-                                <th>Badge</th>
-                                <th>NID</th>
+                                <th>Person Type</th>
+                                <th>Designation</th>
                                 <th>Phone</th>
                                 <th>Division</th>
                                 <th>District</th>
                                 <th>Upazila</th>
-                                <th>Status</th>
-                                <th>Change Status</th>
-                                <th>Actions</th>
+                                <th>CAID</th>
+                                <th>EIIN</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($employees as $index => $employee)
                                 <tr>
                                     <td>{{ $employees->firstItem() + $index }}</td>
-                                    <td>{{ $employee->name }}</td>
+                                    <td>{{ $employee['profile_id'] }}</td>
+                                    <td>{{ $employee['name'] }}</td>
                                     <td>
-                                        @if ($employee->picture)
-                                            <img src="{{ asset('storage/' . $employee->picture) }}" alt="Photo" width="50" height="50" class="rounded-circle">
+                                        @if ($employee['picture'])
+                                            <img src="{{ $employee['picture'] }}" alt="Photo" width="50" height="50" class="rounded-circle" onerror="this.src='{{ asset('images/default.png') }}'">
                                         @else
                                             <img src="{{ asset('images/default.png') }}" alt="No Photo" width="50" height="50" class="rounded-circle">
                                         @endif
                                     </td>
-                                    <td>{{ $employee->badgenumber }}</td>
-                                    <td>{{ $employee->nid }}</td>
-                                    <td>{{ $employee->mobile_number }}</td>
-                                    <td>{{ $employee->division->name ?? '-' }}</td>
-                                    <td>{{ $employee->district->district_name_en ?? '-' }}</td>
-                                    <td>{{ $employee->upazila->upazila_name_en ?? '-' }}</td>
                                     <td>
-                                        <span class="badge bg-{{ $employee->status ? 'success' : 'secondary' }}">
-                                            {{ $employee->status ? 'Active' : 'Inactive' }}
+                                        <span class="badge bg-{{ $employee['person_type'] == 1 ? 'primary' : ($employee['person_type'] == 2 ? 'info' : 'warning') }}">
+                                            {{ $employee['person_type_text'] }}
                                         </span>
                                     </td>
-                                    <td>
-                                        <form method="POST" action="{{ route('employee_profile.toggleStatus', $employee->id) }}" class="d-inline">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn btn-sm {{ $employee->status ? 'btn-warning' : 'btn-success' }}" onclick="return confirm('Are you sure?')">
-                                                {{ $employee->status ? 'Deactivate' : 'Activate' }}
-                                            </button>
-                                        </form>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{{ route('employee_profile.edit', $employee->id) }}" class="btn btn-sm btn-info" title="Edit">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <form action="{{ route('employee_profile.destroy', $employee->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure to delete this employee?')" title="Delete">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            </form>
-                                        </div>
-                                    </td>
+                                    <td>{{ $employee['designation'] ?? '-' }}</td>
+                                    <td>{{ $employee['mobile_number'] ?? '-' }}</td>
+                                    <td>{{ $employee['division_name'] ?? '-' }}</td>
+                                    <td>{{ $employee['district_name'] ?? '-' }}</td>
+                                    <td>{{ $employee['upazila_name'] ?? '-' }}</td>
+                                    <td>{{ $employee['caid'] ?? '-' }}</td>
+                                    <td>{{ $employee['eiin'] ?? '-' }}</td>
                                 </tr>
                             @empty
                                 <tr>
                                     <td colspan="12" class="text-center py-4">
                                         <i class="fas fa-users fa-2x text-muted mb-2"></i>
                                         <p class="text-muted">No employees found.</p>
-                                        <a href="{{ route('employee_profile.add') }}" class="btn btn-primary">Add First Employee</a>
+                                        <p class="text-sm text-muted">Employee data is synchronized from external systems.</p>
                                     </td>
                                 </tr>
                             @endforelse
@@ -200,11 +178,12 @@
 
 @section('styles')
     <style>
-        /* small helper if you need more vertical padding for the selects */
         .form-control { min-height: 38px; }
+        .table img { object-fit: cover; }
     </style>
 @endsection
 
+@section('scripts')
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const divisionSelect = document.getElementById('division_id');
@@ -259,19 +238,16 @@ document.addEventListener('DOMContentLoaded', function () {
             upazilaSelect.innerHTML = '<option value="">All Upazilas</option>';
         }
     });
+
+    // Auto-hide success alert
+    setTimeout(() => {
+        const alert = document.querySelector('.alert-success');
+        if (alert) {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(() => alert.remove(), 500);
+        }
+    }, 3000);
 });
 </script>
-
-
-
-<script>
-    setTimeout(() => {
-        const alert_msg = document.getElementById('alert-success');
-        if (alert) {
-            alert_msg.style.transition = 'opacity 0.5s ease';
-            alert_msg.style.background = 'gray';
-            alert_msg.style.opacity = '0';
-            setTimeout(() => alert_msg.remove(), 500);
-        }
-    }, 3000); // Hide after 3 seconds
-</script>
+@endsection

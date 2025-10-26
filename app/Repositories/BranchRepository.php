@@ -23,7 +23,7 @@ class BranchRepository extends BaseRepository
      public function getBranchDetails($branchId)
     {
         $url = "{$this->baseUrl}/api/v3/branch/{$branchId}";
-        \Log::info("Fetching branch from URL: {$url}");
+        // \Log::info("Fetching branch from URL: {$url}");
         return $this->makeApiCall($url);
     }
 

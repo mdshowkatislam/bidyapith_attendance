@@ -137,6 +137,8 @@ class AttendanceController extends Controller
       
 
 
+        
+
         if (empty($groupIds)) {
             // Log::warning("No groups found for branch_uid: {$validated['branch_uid']} and shift_uid: {$validated['shift_uid']}");
             return collect();

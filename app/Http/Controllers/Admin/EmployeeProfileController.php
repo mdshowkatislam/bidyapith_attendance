@@ -10,9 +10,18 @@ use App\Models\Upazila;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use App\Services\ExternalDataService;
+use Illuminate\Support\Facades\Log;
 
 class EmployeeProfileController extends Controller
 {
+     protected $externalDataService;
+
+    public function __construct(ExternalDataService $externalDataService)
+    {
+        $this->externalDataService = $externalDataService;
+    }
+
     // public function index(Request $request)
     // {
     //     $query = Employee::query();
@@ -56,54 +65,242 @@ class EmployeeProfileController extends Controller
     //     return view('admin.employee_profiles.index', compact('employees', 'divisions', 'districts', 'upazilas'));
     // }
 
+
+
+
+   
     public function index(Request $request)
     {
-        
-        $query = Employee::with(['division', 'district', 'upazila']);
+        $query = Employee::query();
 
-        // Search functionality
+        // Search functionality - search in local table first
         if ($request->has('search') && $request->search != '') {
-             dd($request->search);
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q
-                    ->where('name', 'like', "%{$search}%")
-                    ->orWhere('badgenumber', 'like', "%{$search}%")
-                    ->orWhere('nid', 'like', "%{$search}%")
-                    ->orWhere('mobile_number', 'like', "%{$search}%")
-                    ->orWhere('nid', 'like', "%{$search}%");
+                $q->where('profile_id', 'like', "%{$search}%")
+                  ->orWhere('caid', 'like', "%{$search}%")
+                  ->orWhere('eiin', 'like', "%{$search}%");
             });
         }
 
-        // Filter by division
-        if ($request->has('division_id') && $request->division_id != '') {
-           
-            $query->where('division_id', $request->division_id);
-        }
-
-        // Filter by district
-        if ($request->has('district_id') && $request->district_id != '') {
-            $query->where('district_id', $request->district_id);
-        }
-
-        // Filter by upazila
-        if ($request->has('upazila_id') && $request->upazila_id != '') {
-            $query->where('upazila_id', $request->upazila_id);
-        }
-
-        // Filter by status
-        if ($request->has('status') && $request->status !== '') {
-            $query->where('status', $request->status);
+        // Filter by person_type
+        if ($request->has('person_type') && $request->person_type != '') {
+            $query->where('person_type', $request->person_type);
         }
 
         $employees = $query->paginate(5);
+
+        // Enhance employees with external data
+        $enhancedEmployees = $employees->getCollection()->map(function ($employee) {
+            return $this->enhanceEmployeeWithExternalData($employee);
+        });
+
+        // Replace the collection with enhanced data
+        $employees->setCollection($enhancedEmployees);
+
+        // Apply additional filters on enhanced data
+        if ($request->has('division_id') && $request->division_id != '') {
+            $employees->setCollection(
+                $employees->getCollection()->filter(function ($employee) use ($request) {
+                    return $employee['division_id'] == $request->division_id;
+                })
+            );
+        }
+
+        if ($request->has('district_id') && $request->district_id != '') {
+            $employees->setCollection(
+                $employees->getCollection()->filter(function ($employee) use ($request) {
+                    return $employee['district_id'] == $request->district_id;
+                })
+            );
+        }
+
+        if ($request->has('upazila_id') && $request->upazila_id != '') {
+            $employees->setCollection(
+                $employees->getCollection()->filter(function ($employee) use ($request) {
+                    return $employee['upazila_id'] == $request->upazila_id;
+                })
+            );
+        }
+
         $divisions = Division::all();
         $districts = District::all();
         $upazilas = Upazila::all();
-        // dd( $employees->toArray() );
 
         return view('admin.employee_profiles.index', compact('employees', 'divisions', 'districts', 'upazilas'));
     }
+
+    /**
+     * Enhance employee data with external information
+     */
+    private function enhanceEmployeeWithExternalData($employee)
+    {
+        try {
+            // Fetch external employee details
+            $externalData = $this->externalDataService->fetchEmployeeDetails(
+                $employee->person_type, 
+                $employee->profile_id
+            );
+
+            // If external data is not available, return basic employee data
+            if (empty($externalData)) {
+                return [
+                    'id' => $employee->id,
+                    'eiin' => $employee->eiin,
+                    'caid' => $employee->caid,
+                    'profile_id' => $employee->profile_id,
+                    'person_type' => $employee->person_type,
+                    'person_type_text' => $this->getPersonTypeText($employee->person_type),
+                    'name' => 'Data not available',
+                    'designation' => null,
+                    'mobile_number' => null,
+                    'present_address' => null,
+                    'picture' => null,
+                    'division_id' => null,
+                    'district_id' => null,
+                    'upazila_id' => null,
+                    'division_name' => null,
+                    'district_name' => null,
+                    'upazila_name' => null,
+                    'created_at' => $employee->created_at,
+                    'updated_at' => $employee->updated_at,
+                ];
+            }
+
+            // Get location names
+            $divisionName = isset($externalData['division_id']) ? 
+                $this->externalDataService->fetchDivisionName($externalData['division_id']) : null;
+            $districtName = isset($externalData['district_id']) ? 
+                $this->externalDataService->fetchDistrictName($externalData['district_id']) : null;
+            $upazilaName = isset($externalData['upazilla_id']) ? 
+                $this->externalDataService->fetchUpazilaName($externalData['upazilla_id']) : null;
+
+            return [
+                'id' => $employee->id,
+                'eiin' => $employee->eiin,
+                'caid' => $employee->caid,
+                'profile_id' => $employee->profile_id,
+                'person_type' => $employee->person_type,
+                'person_type_text' => $this->getPersonTypeText($employee->person_type),
+                'name' => $externalData['name_en'] ?? $externalData['name'] ?? 'Unknown',
+                'designation' => $externalData['designation'] ?? null,
+                'mobile_number' => $externalData['mobile_no'] ?? null,
+                'present_address' => $externalData['address'] ?? null,
+                'picture' => $externalData['image'] ?? null,
+                'division_id' => $externalData['division_id'] ?? null,
+                'district_id' => $externalData['district_id'] ?? null,
+                'upazila_id' => $externalData['upazilla_id'] ?? null,
+                'division_name' => $divisionName,
+                'district_name' => $districtName,
+                'upazila_name' => $upazilaName,
+                'created_at' => $employee->created_at,
+                'updated_at' => $employee->updated_at,
+            ];
+
+        } catch (\Exception $e) {
+            Log::error('Error enhancing employee data: ' . $e->getMessage());
+            
+            return [
+                'id' => $employee->id,
+                'eiin' => $employee->eiin,
+                'caid' => $employee->caid,
+                'profile_id' => $employee->profile_id,
+                'person_type' => $employee->person_type,
+                'person_type_text' => $this->getPersonTypeText($employee->person_type),
+                'name' => 'Error loading data',
+                'designation' => null,
+                'mobile_number' => null,
+                'present_address' => null,
+                'picture' => null,
+                'division_id' => null,
+                'district_id' => null,
+                'upazila_id' => null,
+                'division_name' => null,
+                'district_name' => null,
+                'upazila_name' => null,
+                'created_at' => $employee->created_at,
+                'updated_at' => $employee->updated_at,
+            ];
+        }
+    }
+
+    /**
+     * Get person type as text
+     */
+    private function getPersonTypeText($personType)
+    {
+        return match ($personType) {
+            1 => 'Teacher',
+            2 => 'Staff',
+            3 => 'Student',
+            default => 'Unknown',
+        };
+    }
+
+    /**
+     * Show individual employee details
+     */
+    public function show($id)
+    {
+        $employee = Employee::findOrFail($id);
+        $enhancedEmployee = $this->enhanceEmployeeWithExternalData($employee);
+
+        return view('admin.employee_profiles.show', compact('enhancedEmployee'));
+    }
+
+    /**
+     * Advanced search with external data
+     */
+    public function search(Request $request)
+    {
+        $query = Employee::query();
+
+        // Basic search on local fields
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('profile_id', 'like', "%{$search}%")
+                  ->orWhere('caid', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by person type
+        if ($request->has('person_type') && $request->person_type != '') {
+            $query->where('person_type', $request->person_type);
+        }
+
+        $employees = $query->get();
+
+        // Enhance with external data
+        $enhancedEmployees = $employees->map(function ($employee) {
+            return $this->enhanceEmployeeWithExternalData($employee);
+        });
+
+        // Apply external data filters
+        if ($request->has('name') && $request->name != '') {
+            $enhancedEmployees = $enhancedEmployees->filter(function ($employee) use ($request) {
+                return stripos($employee['name'], $request->name) !== false;
+            });
+        }
+
+        if ($request->has('designation') && $request->designation != '') {
+            $enhancedEmployees = $enhancedEmployees->filter(function ($employee) use ($request) {
+                return stripos($employee['designation'] ?? '', $request->designation) !== false;
+            });
+        }
+
+        if ($request->has('mobile_number') && $request->mobile_number != '') {
+            $enhancedEmployees = $enhancedEmployees->filter(function ($employee) use ($request) {
+                return stripos($employee['mobile_number'] ?? '', $request->mobile_number) !== false;
+            });
+        }
+
+        return response()->json([
+            'employees' => $enhancedEmployees->values(),
+            'total' => $enhancedEmployees->count()
+        ]);
+    }
+
 
     public function add()
     {

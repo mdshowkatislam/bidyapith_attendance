@@ -50,11 +50,14 @@ class EmployeeRepository extends BaseRepository
                     'data' => $response['data'] ?? [],
                 ];
             }
+   
+            // \Log::info ( $response );
+    
 
             return [
                 'status' => true,
                 'message' => 'Employee data fetched successfully.',
-                'data' => $response['data'] ?? $response,
+                'data' => $response['data'] ?? $response, 
             ];
         } catch (Exception $e) {
             Log::error("Error fetching employee details from {$url}: " . $e->getMessage(), [

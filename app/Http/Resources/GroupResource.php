@@ -13,7 +13,7 @@ class GroupResource extends JsonResource
         // Resolve the service inside the method
         $externalDataService = app(ExternalDataService::class);
         
-        Log::info('Fetching data for Group ID: ' . $this->id);
+        // Log::info('Fetching data for Group ID: ' . $this->id);
 
         // Use service to fetch external data
         $branchData = $this->branch_uid ? $externalDataService->fetchBranchDetails($this->branch_uid) : null;
@@ -24,22 +24,28 @@ class GroupResource extends JsonResource
                 $employee->person_type, 
                 $employee->profile_id
             );
+               
+            \Log::info("Employee Data Structure:", ['data' => $employeeData]);
+            \Log::info("kk");
+
+            // Extract the actual employee data from the nested structure
+            $employeeDetails = $employeeData['data'] ?? [];
 
             return [
                 'id' => $employee->id,
                 'profile_id' => $employee->profile_id,
                 'person_type' => $employee->person_type,
-                'name' => $employeeData['name_en'] ?? null,
-                'designation' => $employeeData['designation'] ?? null,
-                'mobile_number' => $employeeData['mobile_no'] ?? null,
-                'present_address' => $employeeData['address'] ?? null,
-                'picture' => $employeeData['image'] ?? null,
-                'division' => isset($employeeData['division_id']) ? 
-                    $externalDataService->fetchDivisionName($employeeData['division_id']) : null,
-                'district' => isset($employeeData['district_id']) ? 
-                    $externalDataService->fetchDistrictName($employeeData['district_id']) : null,
-                'upazila' => isset($employeeData['upazilla_id']) ? 
-                    $externalDataService->fetchUpazilaName($employeeData['upazilla_id']) : null,
+                'name' => $employeeDetails['name_en'] ?? null,
+                'designation' => $employeeDetails['designation'] ?? null,
+                'mobile_number' => $employeeDetails['mobile_no'] ?? null,
+                'present_address' => $employeeDetails['address'] ?? null,
+                'picture' => $employeeDetails['image'] ?? null,
+                'division' => isset($employeeDetails['division_id']) ? 
+                    $externalDataService->fetchDivisionName($employeeDetails['division_id']) : null,
+                'district' => isset($employeeDetails['district_id']) ? 
+                    $externalDataService->fetchDistrictName($employeeDetails['district_id']) : null,
+                'upazila' => isset($employeeDetails['upazilla_id']) ? 
+                    $externalDataService->fetchUpazilaName($employeeDetails['upazilla_id']) : null,
             ];
         });
 

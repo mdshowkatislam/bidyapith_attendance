@@ -58,10 +58,11 @@ class BaseGroupController extends Controller
             ])
                 ->withOptions(['verify' => false])
                 ->get('http://attendance2.localhost.com/api/group_manage/add');
+                // dd($response->json());
        
             if ($response->successful()) {
                 $data = $response->json();
-
+                // dd($data);
                 if ($data['status'] === true) {
                     $employees = $data['data']['employees'] ?? [];
                     $workDays = $data['data']['workDays'] ?? [];
@@ -201,6 +202,7 @@ class BaseGroupController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
+                // dd($data);
 
                 if ($data['status'] === true) {
                     $group = $data['data']['group'] ?? null;

@@ -43,6 +43,15 @@ class DropdownService
             'groups' => Group::all()->toArray(),
         ];
     }
+    public function getBranchShiftDropdownData(): array
+    {
+      
+        return [
+            'branches' => $this->branchRepository->getAll()->values()->toArray(),
+            'shifts' => $this->shiftRepository->getAll()->values()->toArray(),
+           
+        ];
+    }
 
     public function getShiftsByBranch($branchUid): array
     {

@@ -19,8 +19,7 @@
     </style>
 
     <div class="container">
-        <h2 class="text-success"
-            style="font-family:'Courier New', Courier, monospace">Edit Group</h2>
+        <h2 class="text-success" style="font-family:'Courier New', Courier, monospace">Edit Group</h2>
 
         <div id="message"></div>
         <div class="row g-3">
@@ -53,9 +52,9 @@
                             style="width: 100%;">
                         <option value="">-- Choose Branch --</option>
                         @foreach ($branches as $branch)
-                            <option value="{{ $branch['branch_id'] }}"
-                                    {{ $group['shift']['branch_id'] == $branch['branch_id'] ? 'selected' : '' }}>
-                                {{ $branch['branch_id'] }} - {{ $branch['branch_name_en'] }}
+                            <option value="{{ $branch['branch_uid'] }}"
+                                    {{ $group['branch']['branch_uid'] == $branch['branch_uid'] ? 'selected' : '' }}>
+                                {{ $branch['branch_name_en'] }}
                             </option>
                         @endforeach
                     </select>
@@ -166,7 +165,18 @@
     <script src="{{ asset('js/jquery-3.6.3.min.js') }}"></script>
     <script>
         $(document).ready(function() {
-                    
+            // Store shifts data from PHP and current group data
+            const shiftsData = @json($shifts);
+            const currentGroup = @json($group);
+            
+            // Get current values from the correct structure
+            const currentShiftUid = currentGroup.shift.shift_uid; // From shift object
+            const currentBranchUid = currentGroup.branch.branch_uid; // From branch object
+
+            console.log('Current Shift UID:', currentShiftUid);
+            console.log('Current Branch UID:', currentBranchUid);
+            console.log('Available shifts:', shiftsData);
+
             // Init select2
             $('.select2').select2({
                 width: '100%',
@@ -174,13 +184,8 @@
                 placeholder: 'Select options'
             });
 
-            // Store current group data
-            const currentGroup = @json($group);
-            const currentBranchCode = currentGroup.shift ? currentGroup.shift.branch_code : null;
-            const currentShiftId = currentGroup.shift_id;
-
             // Function to load shifts for a branch
-            function loadShiftsForBranch(branchCode, selectedShiftId = null) {
+            function loadShiftsForBranch(branchCode, selectedShiftUid = null) {
                 const shiftDropdown = $('#shift_id');
 
                 if (!branchCode) {
@@ -189,38 +194,41 @@
                     return;
                 }
 
-                $.ajax({
-                    url: "/api/group_manage/shifts-by-branch/" + branchCode,
-                    method: "GET",
-                    beforeSend: function() {
-                        shiftDropdown.prop('disabled', true).html(
-                            '<option value="">Loading shifts...</option>');
-                    },
-                    success: function(response) {
-                        if (response.shifts && response.shifts.length > 0) {
-                            let options = '<option value="">-- Select Shift --</option>';
-                            response.shifts.forEach(shift => {
-                                const selected = shift.id == selectedShiftId ? 'selected' : '';
-                                options +=
-                                    `<option value="${shift.id}" ${selected}>${shift.shift_name_en}</option>`;
-                            });
-                            shiftDropdown.html(options).prop('disabled', false);
-                        } else {
-                            shiftDropdown.html(
-                                    '<option value="">No shifts available for this branch</option>')
-                                .prop('disabled', false);
-                        }
-                    },
-                    error: function() {
-                        shiftDropdown.html('<option value="">Error loading shifts</option>').prop(
-                            'disabled', false);
+                // Filter shifts by selected branch
+                const branchShifts = shiftsData.filter(shift => shift.branch_uid == branchCode);
+                
+                console.log('Filtered shifts for branch', branchCode, ':', branchShifts);
+
+                if (branchShifts.length > 0) {
+                    let options = '<option value="">-- Select Shift --</option>';
+                    branchShifts.forEach(shift => {
+                        const selected = shift.shift_uid == selectedShiftUid ? 'selected' : '';
+                        console.log(`Shift: ${shift.shift_uid}, Selected: ${selected}, Current: ${selectedShiftUid}`);
+                        options += 
+                            `<option value="${shift.shift_uid}" ${selected}>${shift.shift_name_en}</option>`;
+                    });
+                    shiftDropdown.html(options).prop('disabled', false);
+                    
+                    // Trigger change to update select2 display
+                    if (selectedShiftUid) {
+                        setTimeout(() => {
+                            shiftDropdown.val(selectedShiftUid).trigger('change');
+                        }, 100);
                     }
-                });
+                } else {
+                    shiftDropdown.html(
+                        '<option value="">No shifts available for this branch</option>'
+                    ).prop('disabled', false);
+                }
             }
 
             // Load shifts for current branch on page load
-            if (currentBranchCode) {
-                loadShiftsForBranch(currentBranchCode, currentShiftId);
+            if (currentBranchUid && currentShiftUid) {
+                console.log('Loading shifts for current branch:', currentBranchUid, 'with shift:', currentShiftUid);
+                loadShiftsForBranch(currentBranchUid, currentShiftUid);
+            } else {
+                console.log('No branch or shift data available');
+                $('#shift_id').html('<option value="">-- Select a branch first --</option>');
             }
 
             // Branch change event
@@ -231,7 +239,6 @@
 
             // Update button click
             $('#btnUpdate').on('click', function(e) {
-              
                 e.preventDefault();
 
                 const group_id = {{ $group['id'] }};
@@ -239,10 +246,8 @@
                 const description = $('#description').val().trim();
                 const branch_code = $('#branch_code').val();
                 const shift_id = $('#shift_id').val();
-                const flexInTime = $('#flexible_in_time').val() ? parseInt($('#flexible_in_time').val()) :
-                    null;
-                const flexOutTime = $('#flexible_out_time').val() ? parseInt($('#flexible_out_time')
-                .val()) : null;
+                const flexInTime = $('#flexible_in_time').val() ? parseInt($('#flexible_in_time').val()) : null;
+                const flexOutTime = $('#flexible_out_time').val() ? parseInt($('#flexible_out_time').val()) : null;
                 const status = $('#status').val();
                 const work_day_ids = $('#work_days').val() || [];
                 const employee_ids = $('#employees').val() || [];
@@ -263,14 +268,11 @@
                     $('#message').html('<div class="alert alert-danger">' + errorMessage + '</div>');
                     return;
                 }
-            //    var apiUrl = "{{ route('group_manage.update', ['id' => $group['id']]) }}";
-            
-          
-            
+
+                // AJAX request
                 $.ajax({
-                         url:"{{ route('group_manage.update', ['id' => $group['id']]) }}",
+                    url: "{{ route('group_manage.update', ['id' => $group['id']]) }}",
                     method: "POST",
-     
                     data: {
                         _token: "{{ csrf_token() }}",
                         group_name: group_name,
@@ -286,13 +288,10 @@
                     },
                     success: function(response) {
                         if (response.status) {
-                            $('#message').html('<div class="alert alert-success">' + response
-                                .message + '</div>');
-                            setTimeout(() => window.location.href =
-                                "{{ route('group_manage.index') }}", 1500);
+                            $('#message').html('<div class="alert alert-success">' + response.message + '</div>');
+                            setTimeout(() => window.location.href = "{{ route('group_manage.index') }}", 1500);
                         } else {
-                            $('#message').html('<div class="alert alert-danger">' + response
-                                .message + '</div>');
+                            $('#message').html('<div class="alert alert-danger">' + response.message + '</div>');
                         }
                     },
                     error: function(xhr) {
@@ -305,7 +304,7 @@
                         } else {
                             $('#message').html(
                                 '<div class="alert alert-danger">Something went wrong.</div>'
-                                );
+                            );
                         }
                     }
                 });

@@ -69,7 +69,9 @@ class GroupController extends Controller
     public function add()
     {
         // Use DropdownService for consistent data fetching
-        $dropdownData = $this->dropdownService->getAllDropdownData();
+        $dropdownData = $this->dropdownService->getBranchShiftDropdownData();
+           \Log::info(      "gg",$dropdownData  ); // why some values are missing? check logs 
+        \Log::info(    "www" );
         
         $workDays = WorkDay::select('id', 'day_name')->get();
         $employees = Employee::whereDoesntHave('groups')->select('id', 'profile_id', 'person_type')->get();
@@ -202,7 +204,7 @@ public function edit($id)
         $groupData = $groupResource->toArray(request());
 
         // Use DropdownService for consistent dropdown data
-        $dropdownData = $this->dropdownService->getAllDropdownData();
+        $dropdownData = $this->dropdownService->getBranchShiftDropdownData();
 
         // Get available employees (not assigned to any group)
         $availableEmployees = Employee::whereDoesntHave('groups')

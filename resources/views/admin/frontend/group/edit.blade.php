@@ -173,10 +173,9 @@
             const currentShiftUid = currentGroup.shift.shift_uid; // From shift object
             const currentBranchUid = currentGroup.branch.branch_uid; // From branch object
 
-            console.log('Current Shift UID:', currentShiftUid);
-            console.log('Current Branch UID:', currentBranchUid);
-            console.log('Available shifts:', shiftsData);
+            
 
+            
             // Init select2
             $('.select2').select2({
                 width: '100%',

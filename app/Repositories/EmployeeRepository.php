@@ -21,7 +21,7 @@ class EmployeeRepository extends BaseRepository
         };
 
         if (!$endpoint) {
-            Log::warning("Invalid person type provided: {$personType}");
+            
             return [
                 'status' => false,
                 'message' => 'Invalid person type.',

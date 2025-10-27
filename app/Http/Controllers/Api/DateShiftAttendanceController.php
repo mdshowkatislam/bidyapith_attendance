@@ -20,7 +20,7 @@ class DateShiftAttendanceController extends Controller
   public function index()
     {
         try {
-            $data = $this->dropdownService->getAllDropdownData();
+            $data = $this->dropdownService->getBranchShiftGroupEmployeeDropdownData();
     
             return response()->json($data);
             

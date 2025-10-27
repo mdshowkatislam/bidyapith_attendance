@@ -38,6 +38,57 @@
             font-size: 22px;
             text-shadow: chartreuse;
         }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #007bff;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .toggle-label {
+            margin-left: 10px;
+            font-weight: bold;
+            color: #333;
+        }
     </style>
 @endpush
 
@@ -54,7 +105,22 @@
                           style="width: 100%;">
 
                         @csrf
-                        <div class="container mt-4 d-flex justify-content-center ">
+                        
+                        <!-- Toggle Switch for Single Person Attendance -->
+                        <div class="container mt-4 d-flex justify-content-center align-items-center">
+                            <div class="col-md-6 mb-3 text-center">
+                                <label class="d-flex align-items-center justify-content-center">
+                                    <span class="toggle-label">Group Attendance</span>
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="singlePersonToggle">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <span class="toggle-label">Single Person Attendance</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="container mt-4 d-flex justify-content-center">
                             <!-- Branch Selection -->
                             <div class="col-md-3 mb-3">
                                 <div class="form-group">
@@ -89,7 +155,37 @@
                                 </div>
                             </div>
 
-                            <div class="col-md-6 mb-3 d-flex justify-content-center"
+                            <!-- Group Selection (initially visible) -->
+                            <div class="col-md-3 mb-3 group-section">
+                                <div class="form-group">
+                                    <label for="group_id">Select Group <span class="text-danger">*</span></label>
+                                    <select id="group_id"
+                                            name="group_id"
+                                            class="form-control"
+                                            required>
+                                        <option value="">-- Choose Group --</option>
+                                        @foreach ($groups as $group)
+                                            <option value="{{ $group['id'] }}">{{ $group['group_name'] }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Employee Selection (initially hidden) -->
+                            <div class="col-md-3 mb-3 employee-section" style="display: none;">
+                                <div class="form-group">
+                                    <label for="employee_id">Select Employee <span class="text-danger">*</span></label>
+                                    <select id="employee_id"
+                                            name="employee_id"
+                                            class="form-control"
+                                            disabled>
+                                        <option value="">-- Choose Employee --</option>
+                                        <!-- Employees will be populated dynamically via JavaScript -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-3 mb-3 d-flex justify-content-center"
                                  style="background:#e7f1fa;border: 1px solid rgb(142, 199, 231); border-radius: 10px;">
                                 <div class="col-md-6 mb-3 position-relative input-clear-wrapper">
                                     <label for="date_range">Select Date Range <span class="text-danger">*</span></label>
@@ -123,54 +219,6 @@
                                             title="Clear Month"
                                             style="display:none;">&times;</button>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="container mt-4 d-flex justify-content-center">
-                            <div class="col-md-3 mb-3">
-                                <label for="division_id">Select Division</label>
-                                <select id="division_id"
-                                        name="division_id"
-                                        class="form-control">
-                                    <option value="">-- Choose Division --</option>
-                                    @foreach ($divisions as $division)
-                                        <option value="{{ $division['id'] }}">{{ $division['division_name_en'] }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label for="district_id">Select District</label>
-                                <select id="district_id"
-                                        name="district_id"
-                                        class="form-control"
-                                        disabled>
-                                    <option value="">-- Choose District</option>
-                                    <!-- Districts will be populated via AJAX based on division -->
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label for="upazila_id">Select Upazila</label>
-                                <select id="upazila_id"
-                                        name="upazila_id"
-                                        class="form-control"
-                                        disabled>
-                                    <option value="">-- Choose Upazila --</option>
-                                    <!-- Upazilas will be populated via AJAX based on district -->
-                                </select>
-                            </div>
-
-                            <div class="col-md-3 mb-3">
-                                <label for="group_id">Select Group</label>
-                                <select id="group_id"
-                                        name="group_id"
-                                        class="form-control">
-                                    <option value="">-- Choose Group --</option>
-                                    @foreach ($groups as $group)
-                                        <option value="{{ $group['id'] }}">{{ $group['group_name'] }}</option>
-                                    @endforeach
-                                </select>
                             </div>
                         </div>
 
@@ -210,19 +258,44 @@
     <script>
         // Store data from PHP (no AJAX needed for branches/shifts since we have all data)
         const shiftsData = @json($shifts);
-        const districtsData = @json($districts);
-        const upazilasData = @json($upazilas);
+        const employeesData = @json($employees); // Make sure you pass employees data from controller
 
         var myJQ = $.noConflict(true);
 
         myJQ(function() {
+            // ========== TOGGLE SWITCH FUNCTIONALITY ==========
+            myJQ('#singlePersonToggle').on('change', function() {
+                const isSinglePerson = myJQ(this).is(':checked');
+                
+                if (isSinglePerson) {
+                    // Show employee section, hide group section
+                    myJQ('.group-section').hide();
+                    myJQ('.employee-section').show();
+                    
+                    // Update required fields
+                    myJQ('#group_id').removeAttr('required');
+                    myJQ('#employee_id').attr('required', 'required');
+                    
+                    // Load employees when toggle is switched to single person
+                    loadEmployees();
+                } else {
+                    // Show group section, hide employee section
+                    myJQ('.group-section').show();
+                    myJQ('.employee-section').hide();
+                    
+                    // Update required fields
+                    myJQ('#employee_id').removeAttr('required');
+                    myJQ('#group_id').attr('required', 'required');
+                    
+                    // Clear employee selection
+                    myJQ('#employee_id').val('').prop('disabled', true);
+                }
+            });
+
             // ========== BRANCH & SHIFTS (No AJAX - all data loaded) ==========
             myJQ('#branch_uid').on('change', function() {
                 const branchId = myJQ(this).val();
                 const shiftSelect = myJQ('#shift_uid');
-
-                console.log("hi3");
-                console.log(shiftsData);
 
                 shiftSelect.empty().append('<option value="">-- Choose Shift --</option>');
 
@@ -232,17 +305,11 @@
 
                     if (branchShifts.length > 0) {
                         branchShifts.forEach(shift => {
-                            console.log("hi5");
-                            console.log(shift);
                             shiftSelect.append(
-                                myJQ('<option>', {   //p-1: just fix this below codes of this funtion ? 
+                                myJQ('<option>', {
                                     value: shift.shift_uid,
-                                    text: shift.shift_name_en + ' (' + shift
-                                    .shift_start_time + ' - ' + shift.shift_end_time +')'
-
-                                 
+                                    text: shift.shift_name_en + ' (' + shift.shift_start_time + ' - ' + shift.shift_end_time + ')'
                                 })
-
                             );
                         });
                         shiftSelect.prop('disabled', false);
@@ -255,65 +322,45 @@
                 }
             });
 
-            // ========== DIVISION, DISTRICT & UPAZILA (Using pre-loaded data) ==========
-            myJQ('#division_id').on('change', function() {
-                const divisionId = myJQ(this).val();
-                const districtSelect = myJQ('#district_id');
-                const upazilaSelect = myJQ('#upazila_id');
+            // ========== LOAD EMPLOYEES FUNCTION ==========
+            function loadEmployees() {
+                const employeeSelect = myJQ('#employee_id');
+                const branchId = myJQ('#branch_uid').val();
+                const shiftId = myJQ('#shift_uid').val();
 
-                districtSelect.empty().append('<option value="">-- Choose District --</option>').prop(
-                    'disabled', true);
-                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop(
-                    'disabled', true);
+                employeeSelect.empty().append('<option value="">-- Choose Employee --</option>');
 
-                if (divisionId) {
-                    // Filter districts by division from pre-loaded data
-                    const divisionDistricts = districtsData.filter(district => district.division_id ==
-                        divisionId);
+                if (branchId && shiftId) {
+                    // Filter employees by branch and shift (you may need to adjust this logic based on your data structure)
+                    const filteredEmployees = employeesData.filter(employee => {
+                        // Adjust this filtering logic based on your employee data structure
+                        // This is just an example - you might need to filter by branch/shift association
+                        return employee.branch_uid == branchId; // Adjust according to your data
+                    });
 
-                    if (divisionDistricts.length > 0) {
-                        divisionDistricts.forEach(district => {
-                            districtSelect.append(
+                    if (filteredEmployees.length > 0) {
+                        filteredEmployees.forEach(employee => {
+                            employeeSelect.append(
                                 myJQ('<option>', {
-                                    value: district.id,
-                                    text: district.district_name_en
+                                    value: employee.profile_id || employee.id,
+                                    text: employee.name || employee.employee_name
                                 })
                             );
                         });
-                        districtSelect.prop('disabled', false);
+                        employeeSelect.prop('disabled', false);
                     } else {
-                        districtSelect.append('<option value="">No districts available</option>');
-                        districtSelect.prop('disabled', true);
+                        employeeSelect.append('<option value="">No employees available</option>');
+                        employeeSelect.prop('disabled', true);
                     }
+                } else {
+                    employeeSelect.prop('disabled', true);
                 }
-            });
+            }
 
-            myJQ('#district_id').on('change', function() {
-                const districtId = myJQ(this).val();
-                const upazilaSelect = myJQ('#upazila_id');
-
-                upazilaSelect.empty().append('<option value="">-- Choose Upazila --</option>').prop(
-                    'disabled', true);
-
-                if (districtId) {
-                    // Filter upazilas by district from pre-loaded data
-                    const districtUpazilas = upazilasData.filter(upazila => upazila.district_id ==
-                        districtId);
-
-                    if (districtUpazilas.length > 0) {
-                        districtUpazilas.forEach(upazila => {
-                            upazilaSelect.append(
-                                myJQ('<option>', {
-                                    value: upazila.id,
-                                    text: upazila.upazila_name_en
-                                })
-                            );
-                        });
-                        upazilaSelect.prop('disabled', false);
-                    } else {
-                        upazilaSelect.append('<option value="">No upazilas available</option>');
-                        upazilaSelect.prop('disabled', true);
-                    }
+            // Load employees when branch or shift changes (only if in single person mode)
+            myJQ('#branch_uid, #shift_uid').on('change', function() {
+                if (myJQ('#singlePersonToggle').is(':checked')) {
+                    loadEmployees();
                 }
             });
 
@@ -321,19 +368,26 @@
             myJQ('form').on('submit', function(e) {
                 let dateRange = myJQ('#date_range').val().trim();
                 let month = myJQ('#month').val().trim();
+                const isSinglePerson = myJQ('#singlePersonToggle').is(':checked');
 
+                // Validate date range or month
                 if (!dateRange && !month) {
                     e.preventDefault();
                     alert("Please select either a Date Range or a Month.");
                     return false;
                 }
 
-                // Remove unnecessary parameters from form submission
-                if (myJQ("select[name='upazila_id']").val()) {
-                    myJQ("select[name='district_id']").removeAttr('name');
-                    myJQ("select[name='division_id']").removeAttr('name');
-                } else if (myJQ("select[name='district_id']").val()) {
-                    myJQ("select[name='division_id']").removeAttr('name');
+                // Validate group/employee selection based on toggle state
+                if (!isSinglePerson && !myJQ('#group_id').val()) {
+                    e.preventDefault();
+                    alert("Please select a Group.");
+                    return false;
+                }
+
+                if (isSinglePerson && !myJQ('#employee_id').val()) {
+                    e.preventDefault();
+                    alert("Please select an Employee.");
+                    return false;
                 }
             });
 
@@ -359,8 +413,7 @@
 
             // Date range events
             myJQ('#date_range').on('apply.daterangepicker', function(ev, picker) {
-                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format(
-                    'YYYY-MM-DD'));
+                myJQ(this).val(picker.startDate.format('YYYY-MM-DD') + ' - ' + picker.endDate.format('YYYY-MM-DD'));
                 if (myJQ(this).val()) {
                     myJQ('#month').val('').prop('disabled', true);
                 } else {
@@ -398,16 +451,12 @@
                 myJQ('#date_range').val('').prop('disabled', false);
                 myJQ('#month').val('').prop('disabled', false);
                 myJQ('#branch_uid').val('').trigger('change');
-                myJQ('#division_id').val('').trigger('change');
                 myJQ('#group_id').val('');
+                myJQ('#employee_id').val('').prop('disabled', true);
+                myJQ('#singlePersonToggle').prop('checked', false).trigger('change');
 
                 // Reset dropdowns
-                myJQ('#shift_uid').empty().append('<option value="">-- Choose Shift --</option>').prop(
-                    'disabled', true);
-                myJQ('#district_id').empty().append('<option value="">-- Choose District --</option>').prop(
-                    'disabled', true);
-                myJQ('#upazila_id').empty().append('<option value="">-- Choose Upazila --</option>').prop(
-                    'disabled', true);
+                myJQ('#shift_uid').empty().append('<option value="">-- Choose Shift --</option>').prop('disabled', true);
 
                 toggleClearButton('#date_range', '#clear-date_range');
                 toggleClearButton('#month', '#clear-month');

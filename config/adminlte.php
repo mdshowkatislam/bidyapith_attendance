@@ -375,14 +375,14 @@ return [
                         ],
                         [
                             'text' => 'Shift Manage',
-                            'icon' => 'fas fa-cogs',
-                            'icon_color' => 'red',
+                            'icon' => 'fas fa-solid fa-cogs',
+                            'icon_color' => 'blue',
                             'route' => 'shift.index',
                         ],
                         [
                             'text' => 'Holiday Manage',
-                            'icon' => 'fas fa-solid fa-mug-hot',
-                            'icon_color' => 'pink',
+                            'icon' => 'fas fa-solid fa-cogs',
+                            'icon_color' => 'yellow',
                             'url' => '/holiday/',
                         ],
                         [
@@ -394,7 +394,8 @@ return [
                         [
                             'text' => 'Special Working Day',
                             'url' => '/special_working_day/',
-                            'icon_color' => 'yellow',
+                            'icon' => 'fas fa-solid fa-mug-hot',
+                            'icon_color' => 'pink',
                         ]
                     ],
                 ],
@@ -426,8 +427,18 @@ return [
             'label_color' => 'danger',
             'submenu' => [
                 [
-                    'text' => 'Attendance',
+                    'text' => 'Attendance Teacher',
                     'icon_color' => 'red',
+                    'url' => '/attendance/show',
+                ],
+                [
+                    'text' => 'Attendance Staff',
+                    'icon_color' => 'blue',
+                    'url' => '/attendance/show',
+                ],
+                [
+                    'text' => 'Attendance Student',
+                    'icon_color' => 'yellow',
                     'url' => '/attendance/show',
                 ]
             ],

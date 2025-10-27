@@ -168,11 +168,13 @@ class BaseGroupController extends Controller
 
     public function store(Request $request)
     {
+        Log::info($request);
         try {
             $response = Http::withOptions(['verify' => false])
                 ->post('http://attendance2.localhost.com/api/group_manage/store', $request->all());
 
             $data = $response->json();
+        Log::info('hi2');
 
             if ($response->successful() && ($data['status'] ?? false) === true) {
                 return response()->json([
@@ -202,7 +204,8 @@ class BaseGroupController extends Controller
 
             if ($response->successful()) {
                 $data = $response->json();
-                // dd($data);
+                // dd($data['data']['employees']);
+                // exit();
 
                 if ($data['status'] === true) {
                     $group = $data['data']['group'] ?? null;
@@ -237,11 +240,16 @@ class BaseGroupController extends Controller
 
     public function update($id, Request $request)
     {
+           Log::info($request);
+           Log::info('uu');
         try {
             $response = Http::withOptions(['verify' => false])
                 ->post("http://attendance2.localhost.com/api/group_manage/update/{$id}", $request->all());
 
             $data = $response->json();
+            
+          
+           Log::info('uu2');
 
             if ($response->successful() && ($data['status'] ?? false) === true) {
                 return response()->json([

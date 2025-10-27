@@ -38,7 +38,7 @@ class GroupController extends Controller
     {
         // Eager load relationships to avoid N+1 queries
         $groups = Group::with(['employees', 'workDays'])->get();
-        // Log::info('Groups fetched count: ' . $groups->count());
+       
 
         if ($groups->isEmpty()) {
             return $this->errorResponse('No groups found.', Response::HTTP_NOT_FOUND);
@@ -140,6 +140,7 @@ class GroupController extends Controller
 
     public function store(Request $request)
     {
+          
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name',
             'description' => 'nullable|string',
@@ -160,6 +161,7 @@ class GroupController extends Controller
         ]);
 
         if ($validator->fails()) {
+           
             return $this->errorResponse($validator->errors()->first(), Response::HTTP_UNPROCESSABLE_ENTITY);
         }
 
@@ -181,8 +183,9 @@ class GroupController extends Controller
                 $group->workDays()->sync($request->work_day_ids);
             }
 
-            if (!empty($request->employee_emp_ids)) {
-                $group->employees()->sync($request->employee_emp_ids);
+            if (!empty($request->employee_ids)) {
+              
+                $group->employees()->sync($request->employee_ids);
             }
 
             return $this->successResponseWithData($group, 'Group created successfully.', Response::HTTP_CREATED);
@@ -258,6 +261,7 @@ public function edit($id)
 
     public function update($id, Request $request)
     {
+      
         $group = Group::findOrFail($id);
         $validator = Validator::make($request->all(), [
             'group_name' => 'required|string|unique:groups,group_name,' . $group->id,
@@ -294,7 +298,9 @@ public function edit($id)
             ]);
 
             $group->workDays()->sync($request->work_day_ids ?? []);
-            $group->employees()->sync($request->employee_emp_ids ?? []);
+            $group->employees()->sync($request->employee_ids ?? []);
+
+           
 
             return $this->successResponseWithData($group, 'Group updated successfully.', Response::HTTP_OK);
         } catch (\Exception $e) {

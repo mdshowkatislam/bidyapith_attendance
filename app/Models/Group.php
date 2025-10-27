@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use App\Models\Employee;
 use App\Models\FlexibleTimeGroup;
 use App\Models\SpecialWorkingday;
 use App\Models\WorkDay;
 use App\Services\ExternalDataService;
+use Illuminate\Database\Eloquent\Model;
 
 class Group extends Model
 {
@@ -23,16 +23,23 @@ class Group extends Model
         'flexible_out_time'
     ];
 
-
+   public function employees()
+{
+    return $this->belongsToMany(
+        Employee::class,
+        'employee_group',
+        'group_id',
+        'employee_emp_id',
+        'id',
+        'profile_id'
+    )->withPivot('created_at', 'updated_at');
+}
 
     /**
      * ✅ Fetch branch data via external API (from config/api_url.php)
      */
-
-
-  public function getBranchDetailsAttribute()
+    public function getBranchDetailsAttribute()
     {
-        // Don't call statically - use service container
         $externalDataService = app(ExternalDataService::class);
         return $externalDataService->fetchBranchDetails($this->branch_uid);
     }
@@ -47,14 +54,8 @@ class Group extends Model
     }
 
     /**
-     * ✅ Relationships (only relevant ones kept)
+     * ✅ Other Relationships
      */
-
-  public function employees()
-{
-    return $this->belongsToMany(Employee::class, 'employee_group', 'group_id', 'employee_emp_id', 'id', 'profile_id');
-}
-
     public function workDays()
     {
         return $this->belongsToMany(WorkDay::class, 'work_day_group');
@@ -73,19 +74,16 @@ class Group extends Model
     /**
      * ✅ Accessors
      */
-
     public function getStatusTextAttribute()
     {
         return $this->status ? 'Active' : 'Inactive';
     }
 
-    // Workday names (local relationship)
     public function getWorkdayNamesAttribute()
     {
         return $this->workDays->pluck('name')->implode(', ');
     }
 
-    // ✅ Use external data for display-friendly names
     public function getShiftNameAttribute()
     {
         return $this->shift_data['shift_name_en'] ?? 'N/A';

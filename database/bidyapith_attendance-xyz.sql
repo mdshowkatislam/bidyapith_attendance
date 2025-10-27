@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Generation Time: Oct 23, 2025 at 12:41 PM
+-- Generation Time: Oct 27, 2025 at 09:11 AM
 -- Server version: 9.1.0
 -- PHP Version: 8.2.26
 
@@ -389,16 +389,18 @@ CREATE TABLE IF NOT EXISTS `employee_group` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `employee_group_employee_emp_id_unique` (`employee_emp_id`),
   KEY `employee_group_group_id_foreign` (`group_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `employee_group`
 --
 
 INSERT INTO `employee_group` (`id`, `group_id`, `employee_emp_id`, `created_at`, `updated_at`) VALUES
-(1, 1, 62, NULL, NULL),
-(2, 1, 55, NULL, NULL),
-(3, 1, 58, NULL, NULL);
+(6, 1, 62, '2025-10-26 23:50:45', '2025-10-26 23:50:45'),
+(5, 1, 55, '2025-10-26 23:50:45', '2025-10-26 23:50:45'),
+(4, 1, 58, '2025-10-26 23:50:45', '2025-10-26 23:50:45'),
+(9, 3, 64, '2025-10-27 02:41:37', '2025-10-27 02:41:37'),
+(10, 3, 57, '2025-10-27 02:41:37', '2025-10-27 02:41:37');
 
 -- --------------------------------------------------------
 
@@ -439,14 +441,15 @@ CREATE TABLE IF NOT EXISTS `groups` (
   `updated_at` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `groups_group_name_unique` (`group_name`)
-) ENGINE=MyISAM AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `groups`
 --
 
 INSERT INTO `groups` (`id`, `group_name`, `description`, `branch_uid`, `shift_uid`, `status`, `flexible_in_time`, `flexible_out_time`, `created_at`, `updated_at`) VALUES
-(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 1845401593211652, 1835688947083507, 1, 10, 15, '2025-10-15 00:09:25', '2025-10-15 00:09:25');
+(1, 'Morning Shift Teachers', 'Teachers assigned to the early morning shift', 1845401593211652, 1835688947083507, 1, 10, 15, '2025-10-15 00:09:25', '2025-10-15 00:09:25'),
+(3, 'Teacher Group', 'Teacher Group Description', 1845401593211652, 1835688947083507, 1, 15, 10, '2025-10-27 02:41:37', '2025-10-27 02:41:37');
 
 -- --------------------------------------------------------
 
@@ -1525,7 +1528,7 @@ CREATE TABLE IF NOT EXISTS `work_day_group` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `work_day_group_group_id_work_day_id_unique` (`group_id`,`work_day_id`),
   KEY `work_day_group_work_day_id_foreign` (`work_day_id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
+) ENGINE=MyISAM AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb3 COLLATE=utf8mb3_unicode_ci;
 
 --
 -- Dumping data for table `work_day_group`
@@ -1533,7 +1536,10 @@ CREATE TABLE IF NOT EXISTS `work_day_group` (
 
 INSERT INTO `work_day_group` (`id`, `group_id`, `work_day_id`, `created_at`, `updated_at`) VALUES
 (1, 1, 1, NULL, NULL),
-(2, 1, 3, NULL, NULL);
+(2, 1, 3, NULL, NULL),
+(7, 3, 1, NULL, NULL),
+(8, 3, 2, NULL, NULL),
+(9, 3, 3, NULL, NULL);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

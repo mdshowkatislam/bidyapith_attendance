@@ -20,14 +20,8 @@ class GroupResource extends JsonResource
         $shiftData  = $this->shift_uid ? $externalDataService->fetchShiftDetails($this->shift_uid) : null;
 
         $employees = $this->employees->map(function ($employee) use ($externalDataService) {
-            $employeeData = $externalDataService->fetchEmployeeDetails(
-                $employee->person_type, 
-                $employee->profile_id
-            );
-               
-            \Log::info("Employee Data Structure:", ['data' => $employeeData]);
-            \Log::info("kk");
-
+            $employeeData = $externalDataService->fetchEmployeeDetails($employee->person_type, $employee->profile_id );
+            
             // Extract the actual employee data from the nested structure
             $employeeDetails = $employeeData['data'] ?? [];
 

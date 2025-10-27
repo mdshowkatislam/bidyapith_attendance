@@ -20,7 +20,7 @@ class BaseDateShiftAttendanceController extends Controller
             ->get('http://attendance2.localhost.com/api/attendance/show');
         $json = $response->json();
    
-        // dd($json);
+        dd($json);
 
         return view('admin.date_shift.index', [
             'branches' => $json['branches'] ?? null,
@@ -45,7 +45,7 @@ class BaseDateShiftAttendanceController extends Controller
             ->withOptions(['verify' => false])
             ->post('http://attendance2.localhost.com/api/branch/shift/date/attendance', $queryParams);
 
-          dd( $response->json());
+        //   dd( $response->json());
 
         if ($response->json()['type'] == 1) {
             $single_json = $response->json()['results'][0];

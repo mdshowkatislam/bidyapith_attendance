@@ -42,8 +42,8 @@
             <!-- Branch Selection -->
             <div class="col-md-4 mb-3">
                 <div class="form-group">
-                    <label for="branch_code">Select Branch <span class="text-danger">*</span></label>
-                    <select id="branch_code" class="form-control select2bs4" style="width: 100%;">
+                    <label for="branch_uid">Select Branch <span class="text-danger">*</span></label>
+                    <select id="branch_uid" class="form-control select2bs4" style="width: 100%;">
                         <option value="">-- Choose Branch --</option>
                         @foreach ($branches as $branch)
                             <option value="{{ $branch['branch_uid'] }}">
@@ -57,8 +57,8 @@
             <!-- Shift Selection (Will be populated based on branch) -->
             <div class="col-md-4 mb-3">
                 <div class="form-group">
-                    <label for="shift_id">Select Shift <span class="text-danger">*</span></label>
-                    <select id="shift_id" class="form-control select2bs4" style="width: 100%;" disabled>
+                    <label for="shift_uid">Select Shift <span class="text-danger">*</span></label>
+                    <select id="shift_uid" class="form-control select2bs4" style="width: 100%;" disabled>
                         <option value="">-- First select a branch --</option>
                     </select>
                 </div>
@@ -82,7 +82,7 @@
                     <label for="employees">Employees <span class="text-danger">*</span></label>
                     <select id="employees" class="form-control select2" multiple="multiple" style="width:100%">
                         @foreach ($employees as $emp)
-                            <option value="{{ $emp['id'] }}">{{ $emp['name'] }}</option>
+                            <option value="{{ $emp['profile_id'] }}">{{ $emp['name'] }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -140,9 +140,9 @@
             });
 
             // Branch change event - Filter shifts based on selected branch
-            $('#branch_code').on('change', function() {
+            $('#branch_uid').on('change', function() {
                 const branchCode = $(this).val();
-                const shiftDropdown = $('#shift_id');
+                const shiftDropdown = $('#shift_uid');
 
                 if (!branchCode) {
                     shiftDropdown.prop('disabled', true).html(
@@ -173,8 +173,8 @@
 
                 const group_name = $('#group_name').val().trim();
                 const description = $('#description').val().trim();
-                const branch_code = $('#branch_code').val();
-                const shift_id = $('#shift_id').val();
+                const branch_uid = $('#branch_uid').val();
+                const shift_uid = $('#shift_uid').val();
                 const flexInTime = $('#flexible_in_time').val() ? parseInt($('#flexible_in_time').val()) : null;
                 const flexOutTime = $('#flexible_out_time').val() ? parseInt($('#flexible_out_time').val()) : null;
                 const status = $('#status').val();
@@ -184,8 +184,8 @@
                 // Validation
                 let errorMessage = "";
                 if (!group_name) errorMessage += "Group name is required.<br>";
-                if (!branch_code) errorMessage += "Branch selection is required.<br>";
-                if (!shift_id) errorMessage += "Shift selection is required.<br>";
+                if (!branch_uid) errorMessage += "Branch selection is required.<br>";
+                if (!shift_uid) errorMessage += "Shift selection is required.<br>";
                 if (work_day_ids.length === 0) errorMessage += "At least one work day is required.<br>";
                 if (employee_ids.length === 0) errorMessage += "At least one employee is required.<br>";
                 if (flexInTime && (flexInTime < 1 || flexInTime > 59)) errorMessage +=
@@ -206,8 +206,8 @@
                         _token: "{{ csrf_token() }}",
                         group_name: group_name,
                         description: description,
-                        branch_code: branch_code,
-                        shift_id: shift_id,
+                        branch_uid: branch_uid,
+                        shift_uid: shift_uid,
                         flexible_in_time: flexInTime,
                         flexible_out_time: flexOutTime,
                         status: status,

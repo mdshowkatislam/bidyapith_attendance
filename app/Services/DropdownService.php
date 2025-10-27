@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Repositories\BranchRepository;
 use App\Repositories\ShiftRepository;
+use App\Repositories\EmployeeRepository;
 use App\Repositories\DivisionRepository;
 use App\Repositories\DistrictRepository;
 use App\Repositories\UpazilaRepository;
@@ -13,6 +14,7 @@ class DropdownService
 {
     protected $branchRepository;
     protected $shiftRepository;
+    protected $employeeRepository;
     protected $divisionRepository;
     protected $districtRepository;
     protected $upazilaRepository;
@@ -20,12 +22,14 @@ class DropdownService
     public function __construct(
         BranchRepository $branchRepository,
         ShiftRepository $shiftRepository,
+        EmployeeRepository $employeeRepository,
         DivisionRepository $divisionRepository,
         DistrictRepository $districtRepository,
         UpazilaRepository $upazilaRepository
     ) {
         $this->branchRepository = $branchRepository;
         $this->shiftRepository = $shiftRepository;
+        $this->employeeRepository = $employeeRepository;
         $this->divisionRepository = $divisionRepository;
         $this->districtRepository = $districtRepository;
         $this->upazilaRepository = $upazilaRepository;
@@ -49,6 +53,17 @@ class DropdownService
         return [
             'branches' => $this->branchRepository->getAll()->values()->toArray(),
             'shifts' => $this->shiftRepository->getAll()->values()->toArray(),
+           
+        ];
+    }
+    public function getBranchShiftGroupEmployeeDropdownData(): array
+    {
+      
+        return [
+            'branches' => $this->branchRepository->getAll()->values()->toArray(),
+            'shifts' => $this->shiftRepository->getAll()->values()->toArray(),
+            'employees' => $this->employeeRepository->getEmployeeDetails(),
+            'groups' => Group::all()->toArray(),
            
         ];
     }
